@@ -24,7 +24,7 @@ class EnvWrapper(gym.Wrapper):
         crop_state = zoom_state.crop((0, 10, width, height - 35))
         return np.array(crop_state).reshape((1, 80, 80)) / 255
 
-    def step(self, action: ActType):
+    def step(self, action):
         observation, reward, done, info = super().step(action)
         # 判断是否丢失生命，如果丢失就施加惩罚
         if self.is_loss_life(observation, done):
@@ -41,7 +41,7 @@ class EnvWrapper(gym.Wrapper):
         self.life = 2
         return self.adjust_picture(observation)
 
-    def is_loss_life(self, observation: np, done) -> bool:
+    def is_loss_life(self, observation: np, done):
         """
         当有两条命时，在219行，有2两命以下时，就跳到了220
 
@@ -60,7 +60,7 @@ class EnvWrapper(gym.Wrapper):
             return life_sum_2 < self.life
         return done
 
-    def shot_cost(self, observation: np, action: ActType) -> float:
+    def shot_cost(self, observation: np, action):
         """
         这里先简单判断乱射击会扣分
 
