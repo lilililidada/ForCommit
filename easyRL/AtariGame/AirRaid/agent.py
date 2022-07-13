@@ -27,7 +27,7 @@ class DQNetwork(QLearning):
         self.policy = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
         self.target = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
         # 经验池
-        self.buffer = ExperiencePool(10000)
+        self.buffer = ExperiencePool(1000)
         # 优化参数
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.lr)
 
@@ -97,9 +97,9 @@ class Config:
         super().__init__()
         # 配置信息
         self.hidden_dim = 32
-        self.batch_size = 500
+        self.batch_size = 100
         self.gamma = 0.9
-        self.lr = 0.01
+        self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -117,7 +117,7 @@ class DoubleDQN(QLearning):
         self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 1000)
         self.choose_time = 0
         # 经验池
-        self.buffer = ExperiencePool(10000)
+        self.buffer = ExperiencePool(1000)
         # 优化参数
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.cfg.lr)
 
@@ -141,6 +141,7 @@ class DoubleDQN(QLearning):
         for param in self.policy.parameters():
             param.grad.clamp_(-1, 1)
         self.optimizer.step()
+        return loss.item()
 
     def choose_action(self, state):
         self.choose_time += 1

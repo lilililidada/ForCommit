@@ -4,10 +4,11 @@ import sys
 from pathlib import Path
 
 import gym
+import numpy as np
 
 from easyRL.AtariGame.AirRaid.agent import DoubleDQN
 from easyRL.AtariGame.AirRaid.wrapper import EnvWrapper
-from easyRL.util.utils import save_result_figure
+from easyRL.util.utils import save_result_figure, plot_losses
 
 
 class TrainTask:
@@ -27,19 +28,22 @@ class TrainTask:
         # 加权值，用于对比观察震荡
         ma_reward = []
         steps = []
+        loss_avg = []
         for i in range(self.train_round):
             print(f"round {i} start")
             reward_sum = 0
             step = 0
             state = self.env.reset()
             done = False
+            loss_sum = []
             while not done:
                 action = self.agent.choose_action(state)
                 next_state, reward, done, _ = self.env.step(action)
                 # 存入经验回放池
                 self.agent.push(state, reward, action, next_state, done)
-                # 更新网络
-                self.agent.update()
+                if len(self.agent.buffer) > self.agent.cfg.batch_size:
+                    # 更新网络
+                    loss_sum.append(self.agent.update())
                 state = next_state
                 reward_sum += reward
                 step += 1
@@ -53,7 +57,9 @@ class TrainTask:
                 ma_reward.append(reward_sum)
             else:
                 ma_reward.append(ma_reward[-1] * 0.9 + 0.1 * reward_sum)
-        return {'rewards': rewards, 'steps': steps, 'ma_reward': ma_reward}
+            if loss_sum:
+                loss_avg.append(np.mean(loss_sum))
+        return {'rewards': rewards, 'steps': steps, 'ma_reward': ma_reward, 'loss_avg': loss_avg}
 
     def test(self, test_round):
         for i in range(test_round):
@@ -82,7 +88,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 1000)
+    task = TrainTask(env, 500)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径
@@ -102,3 +108,5 @@ if __name__ == '__main__':
     task.agent.save(path=model_path)
     # 存储训练结果
     save_result_figure(result['rewards'], result['ma_reward'], result_path)
+    # 存储损失曲线
+    plot_losses(result['loss_avg'], path=result_path)
