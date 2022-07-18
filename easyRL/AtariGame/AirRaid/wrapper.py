@@ -23,7 +23,7 @@ class EnvWrapper(gym.Wrapper):
         width, height = zoom_state.size
         # 裁剪掉多余的图片部分
         crop_state = zoom_state.crop((0, 10, width, height - 35))
-        return np.array(crop_state.getim()).reshape((1, 80, 80)) / 255
+        return np.array(crop_state).reshape((1, 80, 80)) / 255
 
     def step(self, action):
         observation, reward, done, info = super().step(action)
