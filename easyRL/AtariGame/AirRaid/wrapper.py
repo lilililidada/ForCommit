@@ -13,6 +13,7 @@ class EnvWrapper(gym.Wrapper):
         super(EnvWrapper, self).__init__(env)
         self.life = 2
         self.shot_action = [1, 4, 5]
+        self.peace_frame = 0
 
     def adjust_picture(self, state):
         adjust_state = Image.fromarray(state)
@@ -22,7 +23,7 @@ class EnvWrapper(gym.Wrapper):
         width, height = zoom_state.size
         # 裁剪掉多余的图片部分
         crop_state = zoom_state.crop((0, 10, width, height - 35))
-        return np.array(crop_state).reshape((1, 80, 80)) / 255
+        return np.array(crop_state.getim()).reshape((1, 80, 80)) / 255
 
     def step(self, action):
         observation, reward, done, info = super().step(action)
@@ -30,6 +31,9 @@ class EnvWrapper(gym.Wrapper):
         if self.is_loss_life(observation, done):
             reward -= 200
             self.life -= 1
+        if reward:
+            self.peace_frame = 0
+        reward += self.peace_loss()
         # 计算射击价值
         reward += self.shot_cost(observation, action)
         # 调整图片大小
@@ -71,3 +75,9 @@ class EnvWrapper(gym.Wrapper):
         if int(action) in self.shot_action:
             return -3
         return 0.
+
+    def peace_loss(self):
+        """
+        如果长时间拿不到reward，则随时间增长惩罚越高
+        """
+        return self.peace_frame // 10 * -5

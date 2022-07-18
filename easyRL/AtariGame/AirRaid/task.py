@@ -88,7 +88,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 500)
+    task = TrainTask(env, 1000)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径
