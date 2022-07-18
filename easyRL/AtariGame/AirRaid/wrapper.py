@@ -27,7 +27,7 @@ class EnvWrapper(gym.Wrapper):
 
     def step(self, action):
         observation, reward, done, info = super().step(action)
-		if reward:
+        if reward:
             self.peace_frame = 0
         # 判断是否丢失生命，如果丢失就施加惩罚
         if self.is_loss_life(observation, done):
