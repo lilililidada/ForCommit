@@ -97,7 +97,7 @@ class Config:
         super().__init__()
         # 配置信息
         self.hidden_dim = 32
-        self.batch_size = 100
+        self.batch_size = 300
         self.gamma = 0.9
         self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -141,7 +141,6 @@ class DoubleDQN(QLearning):
         for param in self.policy.parameters():
             param.grad.clamp_(-1, 1)
         self.optimizer.step()
-        return loss.item()
 
     def choose_action(self, state):
         self.choose_time += 1
