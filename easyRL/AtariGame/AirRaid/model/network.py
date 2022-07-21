@@ -41,7 +41,7 @@ class NeuralNetwork2(torch.nn.Module):
         self.padding = 0
         self.stride = 2
         self.hidden_dim = 32
-        self.linear_input = self.hidden_dim * 5 * 5
+        self.linear_input = self.hidden_dim * 4 * 4
         self.linear_output = 512
         self.input_layer = torch.nn.Conv2d(input_dim, self.hidden_dim, kernel_size=self.kernel_size, stride=self.stride,
                                            padding=self.padding)
