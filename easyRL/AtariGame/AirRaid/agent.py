@@ -141,6 +141,7 @@ class DoubleDQN(QLearning):
         for param in self.policy.parameters():
             param.grad.clamp_(-1, 1)
         self.optimizer.step()
+        return loss.item()
 
     def choose_action(self, state):
         self.choose_time += 1
