@@ -53,7 +53,7 @@ class NeuralNetwork2(torch.nn.Module):
                                               stride=self.stride, padding=self.padding)
         self.hidden_layer_3 = torch.nn.Conv2d(self.hidden_dim, self.hidden_dim, kernel_size=self.kernel_size,
                                               stride=self.stride, padding=self.padding)
-        self.hidden_linear = torch.nn.Linear(800, self.linear_output)
+        self.hidden_linear = torch.nn.Linear(self.linear_input, self.linear_output)
         self.out_layer = torch.nn.Linear(self.linear_output, out_dim)
 
     def size_compute(self, input_size, cov_num):
