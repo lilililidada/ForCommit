@@ -73,11 +73,11 @@ class EnvWrapper(gym.Wrapper):
         @return:
         """
         if int(action) in self.shot_action:
-            return -3
+            return -20
         return 0.
 
     def peace_loss(self):
         """
         如果长时间拿不到reward，则随时间增长惩罚越高
         """
-        return self.peace_frame // 10 * -5
+        return self.peace_frame // 10 * -20

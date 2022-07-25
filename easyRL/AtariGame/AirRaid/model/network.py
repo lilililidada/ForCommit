@@ -51,7 +51,8 @@ class NeuralNetwork2(torch.nn.Module):
                                               padding=self.padding)
         self.hidden_layer_2 = torch.nn.Conv2d(self.hidden_dim, self.hidden_dim, kernel_size=self.kernel_size,
                                               stride=self.stride, padding=self.padding)
-        self.hidden_pool_layer = torch.nn.MaxPool2d(kernel_size=self.kernel_size, stride=self.stride)
+        self.hidden_layer_3 = torch.nn.Conv2d(self.hidden_dim, self.hidden_dim, kernel_size=self.kernel_size,
+                                              stride=self.stride, padding=self.padding)
         self.hidden_linear = torch.nn.Linear(self.linear_input, self.linear_output)
         self.out_layer = torch.nn.Linear(self.linear_output, out_dim)
 
@@ -65,6 +66,6 @@ class NeuralNetwork2(torch.nn.Module):
         x = F.relu(self.input_layer(state))
         x = F.relu(self.hidden_layer_1(x))
         x = F.relu(self.hidden_layer_2(x))
-        x = F.relu(self.hidden_pool_layer(x))
+        x = F.relu(self.hidden_layer_3(x))
         x = self.hidden_linear(x.view(x.size(0), self.linear_input))
         return self.out_layer(x)
