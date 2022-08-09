@@ -16,7 +16,7 @@ class DQNetwork(QLearning):
         self.hidden_dim = 32
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.batch_size = 600
+        self.batch_size = 200
         self.gamma = 0.5
         self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
