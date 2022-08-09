@@ -6,7 +6,7 @@ from pathlib import Path
 import gym
 import numpy as np
 
-from easyRL.AtariGame.AirRaid.agent import DoubleDQN
+from easyRL.AtariGame.AirRaid.agent import DoubleDQN, DQNetwork
 from easyRL.AtariGame.AirRaid.wrapper import EnvWrapper
 from easyRL.util.utils import save_result_figure, plot_losses
 
@@ -18,7 +18,7 @@ class TrainTask:
         self.env = game_env
         self.channel_size = 1
         self.action_dim = self.env.action_space.n
-        self.agent = DoubleDQN(self.channel_size, self.action_dim)
+        self.agent = DQNetwork(self.channel_size, self.action_dim)
         self.train_round = train_round
         self.update_time = 1
 
@@ -41,7 +41,7 @@ class TrainTask:
                 next_state, reward, done, _ = self.env.step(action)
                 # 存入经验回放池
                 self.agent.push(state, reward, action, next_state, done)
-                if len(self.agent.buffer) > self.agent.cfg.batch_size:
+                if len(self.agent.buffer) > self.agent.batch_size:
                     # 更新网络
                     loss_sum.append(self.agent.update())
                 state = next_state

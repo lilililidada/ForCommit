@@ -16,18 +16,18 @@ class DQNetwork(QLearning):
         self.hidden_dim = 32
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.batch_size = 800
+        self.batch_size = 200
         self.gamma = 0.9
         self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # e贪婪
-        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 1000)
+        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 10000)
         self.update_time = 0
         # 初始化模型
         self.policy = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
         self.target = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
         # 经验池
-        self.buffer = ExperiencePool(1000)
+        self.buffer = ExperiencePool(100000)
         # 优化参数
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.lr)
 
@@ -52,9 +52,9 @@ class DQNetwork(QLearning):
         # next_action_tensor = torch.unsqueeze(torch.max(next_values, dim=1)[1], dim=1)
         # 获取下一状态价值
         # next_values = torch.gather(next_values, dim=1, index=next_action_tensor).squeeze(1)
-        next_values = self.target(next_sate_tensor).max(1)[0].detach()
+        next_q_values = self.target(next_sate_tensor).max(1)[0].detach()
         # 时序差分
-        q_target = self.gamma * (1 - done_tensor) * next_values + reward_tensor
+        q_target = self.gamma * (1 - done_tensor) * next_q_values + reward_tensor
         # 计算损失函数
         loss: torch.Tensor = torch.nn.MSELoss()(q_values, torch.unsqueeze(q_target, dim=1))
         # 优化模型
@@ -67,6 +67,7 @@ class DQNetwork(QLearning):
             param.grad.data.clamp_(-1, 1)
         # 进行一步优化
         self.optimizer.step()
+        return loss.item()
 
     def choose_action(self, state) -> int:
         self.update_time += 1
@@ -117,7 +118,7 @@ class DoubleDQN(QLearning):
         self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 1000)
         self.choose_time = 0
         # 经验池
-        self.buffer = ExperiencePool(1000)
+        self.buffer = ExperiencePool(100000)
         # 优化参数
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.cfg.lr)
 
