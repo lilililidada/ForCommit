@@ -118,7 +118,7 @@ class DoubleDQN(QLearning):
         self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 1000)
         self.choose_time = 0
         # 经验池
-        self.buffer = ExperiencePool(100000)
+        self.buffer = ExperiencePool(10000)
         # 优化参数
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.cfg.lr)
 
