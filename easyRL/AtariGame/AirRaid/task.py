@@ -20,9 +20,10 @@ class TrainTask:
         self.action_dim = self.env.action_space.n
         self.agent = DQNetwork(self.channel_size, self.action_dim)
         self.train_round = train_round
-        self.update_time = 1
+        self.update_time = 10
+        self.save_interval = 200
 
-    def train(self):
+    def train(self, save_path):
         print(f"开始训练")
         rewards = []
         # 加权值，用于对比观察震荡
@@ -59,6 +60,11 @@ class TrainTask:
                 ma_reward.append(ma_reward[-1] * 0.9 + 0.1 * reward_sum)
             if loss_sum:
                 loss_avg.append(np.mean(loss_sum))
+            if not i % self.save_interval:
+                # 存储训练结果
+                save_result_figure(rewards, ma_reward, save_path)
+                # 存储损失曲线
+                plot_losses(loss_avg, path=save_path)
         return {'rewards': rewards, 'steps': steps, 'ma_reward': ma_reward, 'loss_avg': loss_avg}
 
     def test(self, test_round):
@@ -100,9 +106,9 @@ if __name__ == '__main__':
     model_path = curr_path + "/outputs/" + "model" + '/' + curr_time + '/models/'
     # 保存结果的路径
     result_path = curr_path + "/outputs/" + '/' + curr_time + '/results/'
-    result = task.train()
-    env.close()
     make_dir(model_path, result_path)
+    result = task.train(result_path)
+    env.close()
     print("train is end, start to save model")
     # 存储模型
     task.agent.save(path=model_path)

@@ -16,12 +16,12 @@ class DQNetwork(QLearning):
         self.hidden_dim = 32
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.batch_size = 200
-        self.gamma = 0.9
+        self.batch_size = 600
+        self.gamma = 0.5
         self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # e贪婪
-        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 10000)
+        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 1000)
         self.update_time = 0
         # 初始化模型
         self.policy = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
