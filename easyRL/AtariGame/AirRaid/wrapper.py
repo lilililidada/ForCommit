@@ -83,4 +83,4 @@ class EnvWrapper(gym.Wrapper):
         """
         如果长时间拿不到reward，则随时间增长惩罚越高
         """
-        return self.peace_frame // 10 * -20
+        return self.peace_frame // 30 * -20

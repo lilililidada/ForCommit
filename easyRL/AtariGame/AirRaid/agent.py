@@ -27,7 +27,7 @@ class DQNetwork(QLearning):
         self.policy = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
         self.target = NeuralNetwork(self.state_dim, self.action_dim).to(device=self.device)
         # 经验池
-        self.buffer = ExperiencePool(100000)
+        self.buffer = ExperiencePool(10000)
         # 优化参数
         self.optimizer = torch.optim.Adam(self.policy.parameters(), self.lr)
 
