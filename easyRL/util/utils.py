@@ -63,11 +63,10 @@ def plot_losses(losses, algo="DQN", save=True, path='./'):
     plt.figure()
     plt.title("loss curve of {}".format(algo))
     plt.xlabel('epsiodes')
-    plt.plot(losses, label='rewards')
+    plt.plot(losses, label='losses')
     plt.legend()
     if save:
         plt.savefig(path + "losses_curve")
-    plt.show()
 
 
 def save_results_1(dic, tag='train', path='./results'):
