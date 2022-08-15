@@ -217,8 +217,8 @@ class A2CAlgorithm(Reinforcement):
             return random.randrange(self.action_dim)
         self.choose_time += 1
         state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
-        _, dist = self.actor_critic(state_tensor)
-        return dist.sample()
+        dist, _ = self.actor_critic(state_tensor)
+        return dist.sample().cpu().numpy()[0]
 
     def push(self, state, reward, action, next_state, done):
         self.experience_pool.put(state, reward, action, next_state, done)
