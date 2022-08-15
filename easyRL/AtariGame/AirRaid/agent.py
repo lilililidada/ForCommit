@@ -216,7 +216,8 @@ class A2CAlgorithm(Reinforcement):
         if random.random() < self.epsilon(self.choose_time):
             return random.randrange(self.action_dim)
         self.choose_time += 1
-        _, dist = self.actor_critic(state)
+        state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+        _, dist = self.actor_critic(state_tensor)
         return dist.sample()
 
     def push(self, state, reward, action, next_state, done):
