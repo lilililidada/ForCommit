@@ -1,7 +1,7 @@
 import abc
 
 
-class QLearning(metaclass=abc.ABCMeta):
+class Reinforcement(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def update(self):
         pass
