@@ -2,6 +2,7 @@ import datetime
 import os
 import sys
 from pathlib import Path
+from random import random
 
 import gym
 import numpy as np
@@ -34,7 +35,7 @@ class TrainTask:
             print(f"round {i} start")
             reward_sum = 0
             step = 0
-            state = self.env.reset()
+            state = self.env.reset(seed=int(1000 * random()))
             done = False
             loss_sum = []
             while not done:
