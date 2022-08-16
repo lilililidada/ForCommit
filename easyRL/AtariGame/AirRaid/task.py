@@ -6,7 +6,7 @@ from pathlib import Path
 import gym
 import numpy as np
 
-from easyRL.AtariGame.AirRaid.agent import DoubleDQN, DQNetwork
+from easyRL.AtariGame.AirRaid.agent import DoubleDQN, DQNetwork, A2CAlgorithm
 from easyRL.AtariGame.AirRaid.wrapper import EnvWrapper
 from easyRL.util.utils import save_result_figure, plot_losses
 
@@ -18,7 +18,7 @@ class TrainTask:
         self.env = game_env
         self.channel_size = 1
         self.action_dim = self.env.action_space.n
-        self.agent = DQNetwork(self.channel_size, self.action_dim)
+        self.agent = A2CAlgorithm(self.channel_size, self.action_dim)
         self.train_round = train_round
         self.update_time = 10
         self.save_interval = 200
@@ -42,16 +42,16 @@ class TrainTask:
                 next_state, reward, done, _ = self.env.step(action)
                 # 存入经验回放池
                 self.agent.push(state, reward, action, next_state, done)
-                if len(self.agent.buffer) > self.agent.batch_size:
+                if len(self.agent.experience_pool) > self.agent.batch_size:
                     # 更新网络
                     loss_sum.append(self.agent.update())
                 state = next_state
                 reward_sum += reward
                 step += 1
             print(f"the total of reward is {reward_sum}, run step is {step}")
-            # 更新目标网络
-            if i % self.update_time == 0:
-                self.agent.target.load_state_dict(self.agent.policy.state_dict())
+            # # 更新目标网络
+            # if i % self.update_time == 0:
+            #     self.agent.target.load_state_dict(self.agent.policy.state_dict())
             rewards.append(reward_sum)
             steps.append(step)
             if not ma_reward:

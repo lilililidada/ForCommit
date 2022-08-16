@@ -69,3 +69,54 @@ class NeuralNetwork2(torch.nn.Module):
         x = F.relu(self.hidden_layer_3(x))
         x = self.hidden_linear(x.view(x.size(0), self.linear_input))
         return self.out_layer(x)
+
+
+class AdvantageActorCritic(torch.nn.Module):
+    def __init__(self, input_dim, action_dim, state_shape) -> None:
+        super().__init__()
+        self.state_shape = state_shape
+        self.kernel_size = 3
+        self.padding = 1
+        self.stride = 2
+        self.conv_hidden_dim = 16
+        self.linear_hidden_dim = 256
+        self.conv_linear_input = self.__compute_linear_input()
+        self.conv_layer = torch.nn.Sequential(
+            torch.nn.Conv2d(in_channels=input_dim, out_channels=self.conv_hidden_dim, kernel_size=self.kernel_size,
+                            padding=self.padding, stride=self.stride),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(in_channels=self.conv_hidden_dim, out_channels=self.conv_hidden_dim,
+                            kernel_size=self.kernel_size,
+                            padding=self.padding, stride=self.stride),
+            torch.nn.ReLU()
+        )
+        self.actor = torch.nn.Sequential(
+            torch.nn.Linear(self.conv_linear_input, self.linear_hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(self.linear_hidden_dim, action_dim),
+            torch.nn.Softmax(dim=1)
+
+        )
+        self.critic = torch.nn.Sequential(
+            torch.nn.Linear(self.conv_linear_input, self.linear_hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(self.linear_hidden_dim, 1)
+        )
+
+    def forward(self, state):
+        conv_feature = self.conv_layer(state)
+        probs = self.actor(conv_feature.view(conv_feature.size(0), self.conv_linear_input))
+        # 概率分布
+        dist = torch.distributions.Categorical(probs)
+        value = self.critic(conv_feature.view(conv_feature.size(0), self.conv_linear_input))
+        return dist, value
+
+    def __compute_linear_input(self) -> int:
+        def formula(shape: tuple) -> (int, int):
+            x = shape[0]
+            y = shape[1]
+            f = lambda num: (num - self.kernel_size + 2 * self.padding) // self.stride + 1
+            return f(x), f(y)
+
+        conv_state = formula(formula(self.state_shape))
+        return conv_state[0] * conv_state[1] * self.conv_hidden_dim

@@ -19,11 +19,11 @@ class EnvWrapper(gym.Wrapper):
         adjust_state = Image.fromarray(state)
         # 转黑白
         zoom_state = adjust_state.convert("L")
-        zoom_state.thumbnail((80, 125), Image.ANTIALIAS)
+        zoom_state.thumbnail((32, 50), Image.ANTIALIAS)
         width, height = zoom_state.size
         # 裁剪掉多余的图片部分
-        crop_state = zoom_state.crop((0, 10, width, height - 35))
-        return np.array(crop_state).reshape((1, 80, 80)) / 255
+        crop_state = zoom_state.crop((0, 3, width, height - 15))
+        return np.array(crop_state).reshape((1, 32, 32)) / 255
 
     def step(self, action):
         observation, reward, done, info = super().step(action)
@@ -83,4 +83,4 @@ class EnvWrapper(gym.Wrapper):
         """
         如果长时间拿不到reward，则随时间增长惩罚越高
         """
-        return self.peace_frame // 30 * -20
+        return max((self.peace_frame // -20), -5) if self.peace_frame else 0
