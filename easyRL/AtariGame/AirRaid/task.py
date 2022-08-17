@@ -42,13 +42,13 @@ class TrainTask:
             while not done:
                 action = self.agent.choose_action(state)
                 next_state, reward, done, _ = self.env.step(action)
+                reward_sum += reward
                 # 存入经验回放池
-                self.agent.push(state, reward, action, next_state, done)
+                self.agent.push(state, reward_sum, action, next_state, done)
                 if len(self.agent.experience_pool) > self.agent.batch_size:
                     # 更新网络
                     loss_sum.append(self.agent.update())
                 state = next_state
-                reward_sum += reward
                 step += 1
             print(f"the total of reward is {reward_sum}, run step is {step}")
             # # 更新目标网络
@@ -87,7 +87,6 @@ class TrainTask:
             steps.append(step)
         print(np.mean(rewards))
         print(np.mean(steps))
-
 
     def load(self, path):
         self.agent.load(path)
