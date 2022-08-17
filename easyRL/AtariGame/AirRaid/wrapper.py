@@ -1,10 +1,7 @@
-from typing import Tuple, Union
-
 import gym
 import numpy as np
 from PIL import Image
 from gym import Env
-from gym.core import ActType, ObsType
 
 
 class EnvWrapper(gym.Wrapper):
