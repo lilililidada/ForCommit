@@ -1,4 +1,5 @@
 import datetime
+import math
 import os
 import sys
 from pathlib import Path
@@ -69,6 +70,8 @@ class TrainTask:
         return {'rewards': rewards, 'steps': steps, 'ma_reward': ma_reward, 'loss_avg': loss_avg}
 
     def test(self, test_round):
+        rewards = []
+        steps = []
         for i in range(test_round):
             state = self.env.reset()
             done = False
@@ -80,6 +83,11 @@ class TrainTask:
                 state = next_state
                 reward_sum += reward
                 step += 1
+            rewards.append(reward_sum)
+            steps.append(step)
+        print(np.mean(rewards))
+        print(np.mean(steps))
+
 
     def load(self, path):
         self.agent.load(path)

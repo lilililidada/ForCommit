@@ -33,9 +33,9 @@ class EnvWrapper(gym.Wrapper):
         else:
             self.peace_frame += 1
         # 判断是否丢失生命，如果丢失就施加惩罚
-        if self.is_loss_life(observation, done):
-            reward -= 1000
-            self.life -= 1
+        # if self.is_loss_life(observation, done):
+        #     reward -= 1000
+        #     self.life -= 1
         reward += self.peace_loss()
         # 计算射击价值
         # reward += self.shot_cost(observation, action)

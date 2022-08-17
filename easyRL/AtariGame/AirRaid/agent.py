@@ -223,7 +223,7 @@ class A2CAlgorithm(Reinforcement):
         self.experience_pool.put(state, reward, action, next_state, done)
 
     def load(self, path):
-        pass
+        self.actor_critic.load_state_dict(torch.load(path + 'dqn_checkpoint.pth'))
 
     def save(self, path):
         torch.save(self.actor_critic.state_dict(), path + 'dqn_checkpoint.pth')
