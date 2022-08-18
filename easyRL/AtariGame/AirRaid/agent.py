@@ -174,7 +174,7 @@ class A2CAlgorithm(Reinforcement):
         self.batch_size = self.cfg.batch_size
         self.learn_rate = self.cfg.lr
         self.gamma = self.cfg.gamma
-        self.experience_expected_repetition_time = 5
+        self.experience_expected_repetition_time = 3
         self.pool_size = (self.batch_size ** 2) // self.experience_expected_repetition_time
         self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 10000)
         # env
@@ -215,8 +215,9 @@ class A2CAlgorithm(Reinforcement):
         self.choose_time += 1
         if random.random() < self.epsilon(self.choose_time):
             return random.randrange(self.action_dim)
-        state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
-        dist, _ = self.actor_critic(state_tensor)
+        with torch.no_grad():
+            state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+            dist, _ = self.actor_critic(state_tensor)
         return dist.sample().cpu().numpy()[0]
 
     def push(self, state, reward, action, next_state, done):

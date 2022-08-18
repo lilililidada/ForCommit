@@ -1,5 +1,4 @@
 import datetime
-import math
 import os
 import sys
 from pathlib import Path
@@ -44,7 +43,7 @@ class TrainTask:
                 next_state, reward, done, _ = self.env.step(action)
                 # 存入经验回放池
                 self.agent.push(state, reward, action, next_state, done)
-                if len(self.agent.experience_pool) > self.agent.batch_size:
+                if len(self.agent.experience_pool) > self.agent.batch_size * 5:
                     # 更新网络
                     loss_sum.append(self.agent.update())
                 state = next_state
@@ -70,8 +69,6 @@ class TrainTask:
         return {'rewards': rewards, 'steps': steps, 'ma_reward': ma_reward, 'loss_avg': loss_avg}
 
     def test(self, test_round):
-        rewards = []
-        steps = []
         for i in range(test_round):
             state = self.env.reset()
             done = False
@@ -83,10 +80,6 @@ class TrainTask:
                 state = next_state
                 reward_sum += reward
                 step += 1
-            rewards.append(reward_sum)
-            steps.append(step)
-        print(np.mean(rewards))
-        print(np.mean(steps))
 
     def load(self, path):
         self.agent.load(path)
@@ -102,7 +95,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 1000)
+    task = TrainTask(env, 500)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径
