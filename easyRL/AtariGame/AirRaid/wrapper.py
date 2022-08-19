@@ -28,10 +28,10 @@ class EnvWrapper(gym.Wrapper):
     def step(self, action):
         observation, reward, done, info = super().step(action)
         # 有奖励，重置和平计时
-        if reward:
-            self.peace_frame = 0
-        else:
-            self.peace_frame += 1
+        # if reward:
+        #     self.peace_frame = 0
+        # else:
+        #     self.peace_frame += 1
         # 判断是否丢失生命，如果丢失就施加惩罚
         if self.is_loss_life(observation, done):
             reward -= 500
