@@ -36,7 +36,7 @@ class EnvWrapper(gym.Wrapper):
         if self.is_loss_life(observation, done):
             reward -= 5000
             self.life -= 1
-        reward += self.peace_loss()
+        # reward += self.peace_loss()
         # 计算射击价值
         reward += self.shot_cost(observation, action)
         # 调整图片大小
