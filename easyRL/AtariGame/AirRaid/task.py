@@ -43,6 +43,7 @@ class TrainTask:
                 next_state, reward, done, _ = self.env.step(action)
                 # 存入经验回放池
                 self.agent.push(state, reward, action, next_state, done)
+                # 保证学习之前，经验池里面有足够多的经验
                 if len(self.agent.experience_pool) > self.agent.batch_size * 5:
                     # 更新网络
                     loss_sum.append(self.agent.update())
@@ -95,7 +96,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 500)
+    task = TrainTask(env, 2000)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径

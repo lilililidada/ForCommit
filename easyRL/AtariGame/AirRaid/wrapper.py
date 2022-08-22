@@ -1,7 +1,10 @@
+from typing import Tuple, Union
+
 import gym
 import numpy as np
 from PIL import Image
 from gym import Env
+from gym.core import ActType, ObsType
 
 
 class EnvWrapper(gym.Wrapper):
@@ -30,12 +33,12 @@ class EnvWrapper(gym.Wrapper):
         # else:
         #     self.peace_frame += 1
         # 判断是否丢失生命，如果丢失就施加惩罚
-        # if self.is_loss_life(observation, done):
-        #     reward -= 1000
-        #     self.life -= 1
-        # reward += self.peace_loss()
+        if self.is_loss_life(observation, done):
+            reward -= 5000
+            self.life -= 1
+        reward += self.peace_loss()
         # 计算射击价值
-        # reward += self.shot_cost(observation, action)
+        reward += self.shot_cost(observation, action)
         # 调整图片大小
         observation = self.adjust_picture(observation)
         return observation, reward, done, info

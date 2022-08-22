@@ -174,9 +174,9 @@ class A2CAlgorithm(Reinforcement):
         self.batch_size = self.cfg.batch_size
         self.learn_rate = self.cfg.lr
         self.gamma = self.cfg.gamma
-        self.experience_expected_repetition_time = 3
-        self.pool_size = (self.batch_size ** 2) // self.experience_expected_repetition_time
-        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 10000)
+        self.expected_repeat_time = 3
+        self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
+        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 50000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
