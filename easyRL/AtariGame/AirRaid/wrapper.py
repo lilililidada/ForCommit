@@ -29,7 +29,7 @@ class EnvWrapper(gym.Wrapper):
         # 这里因为有些敌机会闪烁，只取一帧的话可能导致时而有时而无，所以一步走两帧
         observation_1, reward_1, done, _ = super().step(action)
         if done:
-            return observation_1, reward_1, done, _
+            return self.adjust_picture(observation_1), reward_1, done, _
         observation_2, reward_2, done, info = super().step(action)
         observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
         # 有奖励，重置和平计时
