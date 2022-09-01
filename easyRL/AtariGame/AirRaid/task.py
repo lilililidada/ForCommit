@@ -43,7 +43,8 @@ class TrainTask:
                 next_state, reward, done, _ = self.env.step(action)
                 # 存入经验回放池
                 self.agent.push(state, reward, action, next_state, done)
-                if len(self.agent.experience_pool) > self.agent.batch_size:
+                # 保证学习之前，经验池里面有足够多的经验
+                if len(self.agent.experience_pool) > self.agent.batch_size * 5:
                     # 更新网络
                     loss_sum.append(self.agent.update())
                 state = next_state
