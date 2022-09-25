@@ -13,7 +13,7 @@ class EnvWrapper(gym.Wrapper):
         self.peace_frame = 0
 
     def adjust_picture(self, state):
-        adjust_state = Image.fromarray(state[0])
+        adjust_state = Image.fromarray(state)
         # 转黑白
         zoom_state = adjust_state.convert("L")
         zoom_state.thumbnail((32, 50), Image.ANTIALIAS)
@@ -24,11 +24,11 @@ class EnvWrapper(gym.Wrapper):
 
     def step(self, action):
         # 这里因为有些敌机会闪烁，只取一帧的话可能导致时而有时而无，所以一步走两帧
-        observation_1, reward_1, done, _ = super().step(action)
-        if done:
-            return self.adjust_picture(observation_1), reward_1, done, _
-        observation_2, reward_2, done, info = super().step(0)
-        observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
+        observation, reward, done, info = super().step(action)
+        # if done:
+        #     return self.adjust_picture(observation_1), reward_1, done, _
+        # observation_2, reward_2, done, info = super().step(0)
+        # observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
         # 有奖励，重置和平计时
         # if reward:
         #     self.peace_frame = 0
