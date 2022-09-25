@@ -13,7 +13,7 @@ class EnvWrapper(gym.Wrapper):
         self.peace_frame = 0
 
     def adjust_picture(self, state):
-        adjust_state = Image.fromarray(np.asarray(state))
+        adjust_state = Image.fromarray(state, "RGB")
         # 转黑白
         zoom_state = adjust_state.convert("L")
         zoom_state.thumbnail((32, 50), Image.ANTIALIAS)
@@ -44,7 +44,7 @@ class EnvWrapper(gym.Wrapper):
     def reset(self, **kwargs):
         observation = super().reset(**kwargs)
         self.life = 2
-        return self.adjust_picture(observation)
+        return self.adjust_picture(np.array(observation))
 
     def is_loss_life(self, observation: np):
         """
