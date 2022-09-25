@@ -13,8 +13,7 @@ class EnvWrapper(gym.Wrapper):
         self.peace_frame = 0
 
     def adjust_picture(self, state):
-        print(state)
-        adjust_state = Image.fromarray(state)
+        adjust_state = Image.fromarray(state[0])
         # 转黑白
         zoom_state = adjust_state.convert("L")
         zoom_state.thumbnail((32, 50), Image.ANTIALIAS)
