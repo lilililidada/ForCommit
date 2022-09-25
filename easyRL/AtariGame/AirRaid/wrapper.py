@@ -42,7 +42,7 @@ class EnvWrapper(gym.Wrapper):
         return observation, reward, done, info
 
     def reset(self, **kwargs):
-        observation = super().reset(**kwargs)
+        observation, info = super().reset(**kwargs)
         self.life = 2
         return self.adjust_picture(observation)
 
