@@ -13,6 +13,7 @@ class EnvWrapper(gym.Wrapper):
         self.peace_frame = 0
 
     def adjust_picture(self, state):
+        print(state)
         adjust_state = Image.fromarray(state)
         # 转黑白
         zoom_state = adjust_state.convert("L")
@@ -39,8 +40,6 @@ class EnvWrapper(gym.Wrapper):
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
         observation = self.adjust_picture(observation)
-        if self.is_loss_life(observation):
-            print("dead")
         return observation, reward, done, info
 
     def reset(self, **kwargs):
