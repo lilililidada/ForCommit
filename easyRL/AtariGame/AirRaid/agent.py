@@ -284,7 +284,6 @@ class PPO2Algorithm(A2CAlgorithm):
         reward_sum = 0
         step = 0
         state = env.reset(seed=int(1000 * random.random()))
-        print(type(state))
         done = False
         loss_sum = []
         while not done:
