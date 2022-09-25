@@ -5,7 +5,7 @@ import torch
 import numpy as np
 
 from easyRL.AtariGame.AirRaid.model.network import NeuralNetwork, NeuralNetwork2, AdvantageActorCritic
-from easyRL.AtariGame.AirRaid.model.memory import ExperiencePool
+from easyRL.AtariGame.AirRaid.model.memory import ExperiencePool, PPOExperiencePool
 from easyRL.bean.myrl import Reinforcement
 
 
@@ -98,7 +98,7 @@ class Config:
         super().__init__()
         # 配置信息
         self.hidden_dim = 32
-        self.batch_size = 200
+        self.batch_size = 500
         self.gamma = 0.9
         self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -176,7 +176,7 @@ class A2CAlgorithm(Reinforcement):
         self.gamma = self.cfg.gamma
         self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
-        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 50000)
+        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 10000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -193,7 +193,7 @@ class A2CAlgorithm(Reinforcement):
         states, rewards, actions, next_states, dones = zip(*self.experience_pool.sample(self.batch_size))
         states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device)
-        actions_tensor = torch.tensor(actions, dtype=torch.int64, device=self.device).unsqueeze(1)
+        actions_tensor = torch.tensor(actions, dtype=torch.int64, device=self.device)
         next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
         dones_tensor = torch.tensor(np.int64(dones), dtype=torch.int64, device=self.device)
         dist, predict_values = self.actor_critic(states_tensor)
@@ -204,12 +204,15 @@ class A2CAlgorithm(Reinforcement):
         actor_loss = -(log_probs * advantage.detach()).mean()
         critic_loss = self.loss_function(predict_values, rewards_tensor + predict_next_values * (1 - dones_tensor))
         loss = actor_loss + critic_loss - 0.001 * entropy
+        self.optimize(loss)
+        return loss.item()
+
+    def optimize(self, loss):
         self.optimizer.zero_grad()
         loss.backward()
         for param in self.actor_critic.parameters():
             param.grad.clamp_(-1, 1)
         self.optimizer.step()
-        return loss.item()
 
     def choose_action(self, state):
         self.choose_time += 1
@@ -220,6 +223,26 @@ class A2CAlgorithm(Reinforcement):
             dist, _ = self.actor_critic(state_tensor)
         return dist.sample().cpu().numpy()[0]
 
+    def interaction(self, env):
+        reward_sum = 0
+        step = 0
+        state = env.reset(seed=int(1000 * random.random()))
+        done = False
+        loss_sum = []
+        while not done:
+            action = self.choose_action(state)
+            next_state, reward, done, _ = env.step(action)
+            # 存入经验回放池
+            self.push(state, reward, action, next_state, done)
+            # 保证学习之前，经验池里面有足够多的经验
+            if len(self.experience_pool) > self.batch_size * 5:
+                # 更新网络
+                loss_sum.append(self.update())
+            state = next_state
+            reward_sum += reward
+            step += 1
+        return reward_sum, loss_sum, step
+
     def push(self, state, reward, action, next_state, done):
         self.experience_pool.put(state, reward, action, next_state, done)
 
@@ -228,3 +251,56 @@ class A2CAlgorithm(Reinforcement):
 
     def save(self, path):
         torch.save(self.actor_critic.state_dict(), path + 'dqn_checkpoint.pth')
+
+
+class PPO2Algorithm(A2CAlgorithm):
+    def __init__(self, state_dim, action_dim):
+        super().__init__(state_dim, action_dim)
+        self.experience_pool = PPOExperiencePool(self.pool_size)
+        self.ppo_epsilon = 0.5
+
+    def update(self):
+        states, rewards, actions, next_states, dones, old_probs = zip(*self.experience_pool.sample(self.batch_size))
+        states, rewards, actions, next_states, dones = zip(*self.experience_pool.sample(self.batch_size))
+        states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
+        rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device)
+        actions_tensor = torch.tensor(actions, dtype=torch.int64, device=self.device)
+        next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
+        dones_tensor = torch.tensor(np.int64(dones), dtype=torch.int64, device=self.device)
+        old_probs_tensor = torch.tensor(old_probs, dtype=torch.float32, device=self.device)
+        dist, predict_values = self.actor_critic(states_tensor)
+        log_probs = dist.log_prob(actions_tensor)
+        ratio = torch.exp(log_probs - old_probs_tensor)
+        entropy = dist.entropy().mean()
+        next_probs, predict_next_values = self.actor_critic(next_states_tensor)
+        advantages = rewards_tensor + predict_next_values * (1 - dones_tensor) - predict_next_values
+        critic_loss = (advantages ** 2) / 2
+        actor_loss = - torch.mean(
+            torch.min(ratio, torch.clip(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
+        total_loss = actor_loss + critic_loss - 0.001 * entropy
+        self.optimize(total_loss)
+        return total_loss.item()
+
+    def interaction(self, env):
+        reward_sum = 0
+        step = 0
+        state = env.reset(seed=int(1000 * random.random()))
+        done = False
+        loss_sum = []
+        while not done:
+            action = 0
+            log_prob = 0
+            with torch.no_grad():
+                dist, predict_value = self.actor_critic(state)
+                action = dist.sample().cpu().numpy()[0]
+                log_prob = dist.log_prob(action)
+            next_state, reward, done, _ = env.step(action)
+            self.experience_pool.put((state, reward, action, next_state, done, log_prob))
+            # 保证学习之前，经验池里面有足够多的经验
+            if len(self.experience_pool) > self.batch_size * 5:
+                # 更新网络
+                loss_sum.append(self.update())
+            state = next_state
+            reward_sum += reward
+            step += 1
+        return reward_sum, loss_sum, step

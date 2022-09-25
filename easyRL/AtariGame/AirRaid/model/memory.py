@@ -23,3 +23,26 @@ class ExperiencePool:
 
     def __len__(self):
         return len(self.pool)
+
+
+class PPOExperiencePool:
+    def __init__(self, fix_size) -> None:
+        super().__init__()
+        self.fix_size = fix_size
+        self.pool = []
+        self.current = 0
+
+    def put(self, transaction):
+        if len(self.pool) < self.fix_size:
+            self.pool.append(transaction)
+            return
+        if self.current >= self.fix_size:
+            self.current = self.current % self.fix_size
+        self.pool[self.current] = transaction
+        self.current += 1
+
+    def sample(self, batch_size):
+        return random.sample(self.pool, batch_size)
+
+    def __len__(self):
+        return len(self.pool)

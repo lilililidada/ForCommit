@@ -11,8 +11,9 @@ if [ -e ForCommit ]; then
     rm -rf ForCommit
 fi
 
-git clone git@github.com:lilililidada/ForCommit.git
-if [ $? -eq 0 ]; then
+
+if git clone git@github.com:lilililidada/ForCommit.git;
+then
   cd ./ForCommit || exit
   build
 fi

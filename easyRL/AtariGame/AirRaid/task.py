@@ -2,12 +2,11 @@ import datetime
 import os
 import sys
 from pathlib import Path
-from random import random
 
 import gym
 import numpy as np
 
-from easyRL.AtariGame.AirRaid.agent import DoubleDQN, DQNetwork, A2CAlgorithm
+from easyRL.AtariGame.AirRaid.agent import PPO2Algorithm
 from easyRL.AtariGame.AirRaid.wrapper import EnvWrapper
 from easyRL.util.utils import save_result_figure, plot_losses
 
@@ -19,7 +18,7 @@ class TrainTask:
         self.env = game_env
         self.channel_size = 1
         self.action_dim = self.env.action_space.n
-        self.agent = A2CAlgorithm(self.channel_size, self.action_dim)
+        self.agent = PPO2Algorithm(self.channel_size, self.action_dim)
         self.train_round = train_round
         self.update_time = 10
         self.save_interval = 200
@@ -33,23 +32,7 @@ class TrainTask:
         loss_avg = []
         for i in range(self.train_round):
             print(f"round {i} start")
-            reward_sum = 0
-            step = 0
-            state = self.env.reset(seed=int(1000 * random()))
-            done = False
-            loss_sum = []
-            while not done:
-                action = self.agent.choose_action(state)
-                next_state, reward, done, _ = self.env.step(action)
-                # 存入经验回放池
-                self.agent.push(state, reward, action, next_state, done)
-                # 保证学习之前，经验池里面有足够多的经验
-                if len(self.agent.experience_pool) > self.agent.batch_size * 5:
-                    # 更新网络
-                    loss_sum.append(self.agent.update())
-                state = next_state
-                reward_sum += reward
-                step += 1
+            reward_sum, loss_sum, step = self.agent.interaction(self.env)
             print(f"the total of reward is {reward_sum}, run step is {step}")
             # # 更新目标网络
             # if i % self.update_time == 0:
@@ -96,7 +79,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 1500)
+    task = TrainTask(env, 2000)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径

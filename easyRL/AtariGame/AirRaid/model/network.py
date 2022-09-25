@@ -75,20 +75,21 @@ class AdvantageActorCritic(torch.nn.Module):
     def __init__(self, input_dim, action_dim, state_shape) -> None:
         super().__init__()
         self.state_shape = state_shape
-        self.kernel_size = 3
+        self.kernel_size = 5
         self.padding = 1
         self.stride = 2
         self.conv_hidden_dim = 16
-        self.linear_hidden_dim = 256
-        self.conv_linear_input = self.__compute_linear_input()
+        self.linear_hidden_dim = 400
+        self.conv_linear_input = 400
         self.conv_layer = torch.nn.Sequential(
             torch.nn.Conv2d(in_channels=input_dim, out_channels=self.conv_hidden_dim, kernel_size=self.kernel_size,
                             padding=self.padding, stride=self.stride),
-            torch.nn.ReLU(),
-            torch.nn.Conv2d(in_channels=self.conv_hidden_dim, out_channels=self.conv_hidden_dim,
-                            kernel_size=self.kernel_size,
-                            padding=self.padding, stride=self.stride),
-            torch.nn.ReLU()
+            # 维度含义： 1、是否有物体; 2+N、类型（敌机1，敌机2，敌机3，子弹，我方）; 7、位置1(左开始); 8、位置2(右结束); 9、位置3(上边界); 10、位置4(下边界)
+            # 输出数据维度为(6, 6, 10)
+            torch.nn.Conv2d(in_channels=self.conv_hidden_dim, out_channels=10,
+                            kernel_size=5, stride=self.stride),
+            # 输出数据维度为(1, 1, linear_hidden_dim)
+            torch.nn.Conv2d(in_channels=10, out_channels=self.linear_hidden_dim, kernel_size=5, stride=2)
         )
         self.actor = torch.nn.Sequential(
             torch.nn.Linear(self.conv_linear_input, self.linear_hidden_dim),
@@ -110,13 +111,3 @@ class AdvantageActorCritic(torch.nn.Module):
         dist = torch.distributions.Categorical(probs)
         value = self.critic(conv_feature.view(conv_feature.size(0), self.conv_linear_input))
         return dist, value
-
-    def __compute_linear_input(self) -> int:
-        def formula(shape: tuple) -> (int, int):
-            x = shape[0]
-            y = shape[1]
-            f = lambda num: (num - self.kernel_size + 2 * self.padding) // self.stride + 1
-            return f(x), f(y)
-
-        conv_state = formula(formula(self.state_shape))
-        return conv_state[0] * conv_state[1] * self.conv_hidden_dim

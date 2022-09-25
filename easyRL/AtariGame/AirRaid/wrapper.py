@@ -1,10 +1,7 @@
-from typing import Tuple, Union
-
 import gym
 import numpy as np
 from PIL import Image
 from gym import Env
-from gym.core import ActType, ObsType
 
 
 class EnvWrapper(gym.Wrapper):
@@ -30,22 +27,20 @@ class EnvWrapper(gym.Wrapper):
         observation_1, reward_1, done, _ = super().step(action)
         if done:
             return self.adjust_picture(observation_1), reward_1, done, _
-        observation_2, reward_2, done, info = super().step(action)
+        observation_2, reward_2, done, info = super().step(0)
         observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
         # 有奖励，重置和平计时
         # if reward:
         #     self.peace_frame = 0
         # else:
         #     self.peace_frame += 1
-        # 判断是否丢失生命，如果丢失就施加惩罚
-        # if self.is_loss_life(observation, done):
-        #     reward -= 5000
-        #     self.life -= 1
         reward += self.peace_loss()
         # 计算射击价值
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
         observation = self.adjust_picture(observation)
+        if self.is_loss_life(observation):
+            print("dead")
         return observation, reward, done, info
 
     def reset(self, **kwargs):
@@ -53,24 +48,18 @@ class EnvWrapper(gym.Wrapper):
         self.life = 2
         return self.adjust_picture(observation)
 
-    def is_loss_life(self, observation: np, done):
+    def is_loss_life(self, observation: np):
         """
-        当有两条命时，在219行，有2两命以下时，就跳到了220
+        判断是否失去生命
 
         @param observation: 图片
         @return: 是否失去生命
         """
-        life1 = 1 if observation[219][58][0] else 0
-        life2 = 1 if observation[219][66][0] else 0
-        life_sum_1 = life1 + life2
-        if life_sum_1:
-            return life_sum_1 < self.life
-        life3 = 1 if observation[220][58][0] else 0
-        life4 = 1 if observation[220][66][0] else 0
-        life_sum_2 = life3 + life4
-        if life_sum_2:
-            return life_sum_2 < self.life
-        return done
+        target_row = observation[0][29] * 255
+        for num in target_row:
+            if num >= 78:
+                return True
+        return False
 
     def shot_cost(self, observation: np, action):
         """
