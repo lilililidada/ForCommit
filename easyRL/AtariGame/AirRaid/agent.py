@@ -261,7 +261,6 @@ class PPO2Algorithm(A2CAlgorithm):
 
     def update(self):
         states, rewards, actions, next_states, dones, old_probs = zip(*self.experience_pool.sample(self.batch_size))
-        states, rewards, actions, next_states, dones = zip(*self.experience_pool.sample(self.batch_size))
         states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device)
         actions_tensor = torch.tensor(actions, dtype=torch.int64, device=self.device)
@@ -274,7 +273,7 @@ class PPO2Algorithm(A2CAlgorithm):
         entropy = dist.entropy().mean()
         next_probs, predict_next_values = self.actor_critic(next_states_tensor)
         advantages = rewards_tensor + predict_next_values * (1 - dones_tensor) - predict_next_values
-        critic_loss = (advantages ** 2) / 2
+        critic_loss = torch.mean((advantages ** 2) / 2)
         actor_loss = - torch.mean(
             torch.min(ratio, torch.clip(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
         total_loss = actor_loss + critic_loss - 0.001 * entropy
@@ -288,8 +287,6 @@ class PPO2Algorithm(A2CAlgorithm):
         done = False
         loss_sum = []
         while not done:
-            action = 0
-            log_prob = 0
             with torch.no_grad():
                 state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
                 dist, predict_value = self.actor_critic(state_tensor)
