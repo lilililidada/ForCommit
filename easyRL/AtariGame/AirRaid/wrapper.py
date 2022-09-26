@@ -30,11 +30,11 @@ class EnvWrapper(gym.Wrapper):
         # observation_2, reward_2, done, info = super().step(0)
         # observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
         # 有奖励，重置和平计时
-        # if reward:
-        #     self.peace_frame = 0
-        # else:
-        #     self.peace_frame += 1
-        # reward += self.peace_loss()
+        if reward:
+            self.peace_frame = 0
+        else:
+            self.peace_frame += 1
+        reward += self.peace_loss()
         # 计算射击价值
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
