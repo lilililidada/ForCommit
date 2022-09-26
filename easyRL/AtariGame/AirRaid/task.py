@@ -44,7 +44,9 @@ class TrainTask:
             else:
                 ma_reward.append(ma_reward[-1] * 0.9 + 0.1 * reward_sum)
             if loss_sum:
-                loss_avg.append(np.mean(loss_sum))
+                loss = np.mean(loss_sum)
+                print(f"loss is {loss}")
+                loss_avg.append(loss)
             if not i % self.save_interval:
                 # 存储训练结果
                 save_result_figure(rewards, ma_reward, save_path)
@@ -79,7 +81,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 2000)
+    task = TrainTask(env, 200)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径

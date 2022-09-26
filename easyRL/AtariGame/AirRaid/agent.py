@@ -210,8 +210,6 @@ class A2CAlgorithm(Reinforcement):
     def optimize(self, loss):
         self.optimizer.zero_grad()
         loss.backward()
-        for param in self.actor_critic.parameters():
-            param.grad.clamp_(-1, 1)
         self.optimizer.step()
 
     def choose_action(self, state):
@@ -226,7 +224,8 @@ class A2CAlgorithm(Reinforcement):
     def interaction(self, env):
         reward_sum = 0
         step = 0
-        state = env.reset(seed=int(1000 * random.random()))
+        state = env.reset(seed=int(1000 * random.random()), return_info=False)
+        env.step()
         done = False
         loss_sum = []
         while not done:
@@ -275,7 +274,7 @@ class PPO2Algorithm(A2CAlgorithm):
         advantages = rewards_tensor + predict_next_values * (1 - dones_tensor) - predict_next_values
         critic_loss = torch.mean((advantages ** 2) / 2)
         actor_loss = - torch.mean(
-            torch.min(ratio, torch.clip(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
+            torch.min(ratio, torch.clamp(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
         total_loss = actor_loss + critic_loss - 0.001 * entropy
         self.optimize(total_loss)
         return total_loss.item()

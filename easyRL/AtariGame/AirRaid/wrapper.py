@@ -34,15 +34,17 @@ class EnvWrapper(gym.Wrapper):
         #     self.peace_frame = 0
         # else:
         #     self.peace_frame += 1
-        reward += self.peace_loss()
+        # reward += self.peace_loss()
         # 计算射击价值
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
         observation = self.adjust_picture(observation)
+        # if self.is_loss_life(observation):
+        #     print("dead")
         return observation, reward, done, info
 
     def reset(self, **kwargs):
-        observation, info = super().reset(**kwargs)
+        observation = super().reset(**kwargs)
         self.life = 2
         return self.adjust_picture(observation)
 
