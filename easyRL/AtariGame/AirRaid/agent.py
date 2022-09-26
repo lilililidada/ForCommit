@@ -176,7 +176,7 @@ class A2CAlgorithm(Reinforcement):
         self.gamma = self.cfg.gamma
         self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
-        self.epsilon = lambda study_round: 0.01 + (0.95 - 0.01) * math.exp(-1. * study_round / 10000)
+        self.epsilon = lambda study_round: 0.1 + (0.95 - 0.1) * math.exp(-1. * study_round / 10000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -214,8 +214,6 @@ class A2CAlgorithm(Reinforcement):
 
     def choose_action(self, state):
         self.choose_time += 1
-        if random.random() < self.epsilon(self.choose_time):
-            return random.randrange(self.action_dim)
         with torch.no_grad():
             state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
             dist, _ = self.actor_critic(state_tensor)
@@ -229,7 +227,10 @@ class A2CAlgorithm(Reinforcement):
         done = False
         loss_sum = []
         while not done:
-            action = self.choose_action(state)
+            if random.random() < self.epsilon(self.choose_time):
+                action = random.randrange(self.action_dim)
+            else:
+                action = self.choose_action(state)
             next_state, reward, done, _ = env.step(action)
             # 存入经验回放池
             self.push(state, reward, action, next_state, done)
