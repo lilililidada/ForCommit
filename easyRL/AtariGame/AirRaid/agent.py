@@ -226,7 +226,8 @@ class A2CAlgorithm(Reinforcement):
     def interaction(self, env):
         reward_sum = 0
         step = 0
-        state = env.reset(seed=int(1000 * random.random()))
+        state = env.reset(seed=int(1000 * random.random()), return_info=False)
+        env.step()
         done = False
         loss_sum = []
         while not done:

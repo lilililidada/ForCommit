@@ -39,10 +39,12 @@ class EnvWrapper(gym.Wrapper):
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
         observation = self.adjust_picture(observation)
+        # if self.is_loss_life(observation):
+        #     print("dead")
         return observation, reward, done, info
 
     def reset(self, **kwargs):
-        observation, info = super().reset(**kwargs)
+        observation = super().reset(**kwargs)
         self.life = 2
         return self.adjust_picture(observation)
 
