@@ -34,7 +34,7 @@ class EnvWrapper(gym.Wrapper):
         #     self.peace_frame = 0
         # else:
         #     self.peace_frame += 1
-        reward += self.peace_loss()
+        # reward += self.peace_loss()
         # 计算射击价值
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
