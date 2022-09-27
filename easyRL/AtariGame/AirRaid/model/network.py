@@ -101,6 +101,7 @@ class AdvantageActorCritic(torch.nn.Module):
         self.critic = torch.nn.Sequential(
             torch.nn.Linear(self.linear_hidden_dim, 1)
         )
+        self._initialize_weights()
 
     def forward(self, state):
         conv_feature = self.conv_layer(state)
@@ -112,10 +113,8 @@ class AdvantageActorCritic(torch.nn.Module):
 
     def _initialize_weights(self):
         for module in self.modules():
-            if isinstance(module, torch.nn.Conv2d) or isinstance(module, nn.Linear):
+            if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
                 torch.nn.init.orthogonal_(module.weight, torch.nn.init.calculate_gain('relu'))
-                # nn.init.xavier_uniform_(module.weight)
-                # nn.init.kaiming_uniform_(module.weight)
                 torch.nn.init.constant_(module.bias, 0)
 
 

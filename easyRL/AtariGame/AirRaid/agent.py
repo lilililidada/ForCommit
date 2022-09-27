@@ -291,10 +291,7 @@ class PPO2Algorithm(A2CAlgorithm):
         while not done:
             state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
             dist, predict_value = self.actor_critic(state_tensor)
-            if random.random() < self.epsilon(self.choose_time):
-                action = random.randrange(self.action_dim)
-            else:
-                action = dist.sample().cpu().numpy()[0]
+            action = dist.sample().cpu().numpy()[0]
             action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
             log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
