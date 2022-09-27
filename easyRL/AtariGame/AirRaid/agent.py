@@ -176,7 +176,7 @@ class A2CAlgorithm(Reinforcement):
         self.gamma = self.cfg.gamma
         self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
-        self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 10000)
+        self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 1000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -291,7 +291,10 @@ class PPO2Algorithm(A2CAlgorithm):
         while not done:
             state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
             dist, predict_value = self.actor_critic(state_tensor)
-            action = dist.sample().cpu().numpy()[0]
+            if random.random() < self.epsilon(self.choose_time):
+                action = random.randrange(self.action_dim)
+            else:
+                action = dist.sample().cpu().numpy()[0]
             action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
             log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
