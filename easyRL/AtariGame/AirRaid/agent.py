@@ -176,7 +176,7 @@ class A2CAlgorithm(Reinforcement):
         self.gamma = self.cfg.gamma
         self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
-        self.epsilon = lambda study_round: 0.1 + (0.95 - 0.1) * math.exp(-1. * study_round / 10000)
+        self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 10000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
