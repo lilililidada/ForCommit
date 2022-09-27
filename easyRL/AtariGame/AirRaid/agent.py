@@ -274,7 +274,7 @@ class PPO2Algorithm(A2CAlgorithm):
         ratio = torch.exp(log_probs - old_probs_tensor)
         entropy = dist.entropy().mean()
         next_probs, predict_next_values = self.actor_critic(next_states_tensor)
-        advantages = rewards_tensor + predict_next_values * (1 - dones_tensor) - predict_next_values
+        advantages = rewards_tensor + self.gamma * predict_next_values * (1 - dones_tensor) - predict_values
         critic_loss = torch.mean((advantages ** 2) / 2)
         actor_loss = - torch.mean(
             torch.min(ratio, torch.clamp(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
@@ -299,7 +299,7 @@ class PPO2Algorithm(A2CAlgorithm):
                 action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
                 log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
-            self.experience_pool.put((state, reward, action, next_state, done, log_prob))
+            self.experience_pool.put((state, reward, action, next_state, done, log_prob.item()))
             # 保证学习之前，经验池里面有足够多的经验
             if len(self.experience_pool) > self.batch_size * 5:
                 # 更新网络
