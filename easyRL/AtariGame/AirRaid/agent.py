@@ -273,7 +273,7 @@ class PPO2Algorithm(A2CAlgorithm):
         log_probs = dist.log_prob(actions_tensor)
         ratio = torch.exp(log_probs - old_probs_tensor)
         entropy = dist.entropy().mean()
-        next_probs, predict_next_values = self.actor_critic(next_states_tensor)
+        next_dist, predict_next_values = self.actor_critic(next_states_tensor)
         advantages = rewards_tensor + self.gamma * predict_next_values * (1 - dones_tensor) - predict_values
         critic_loss = torch.mean((advantages ** 2) / 2)
         actor_loss = - torch.mean(
@@ -292,10 +292,7 @@ class PPO2Algorithm(A2CAlgorithm):
             with torch.no_grad():
                 state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
                 dist, predict_value = self.actor_critic(state_tensor)
-                if random.random() < self.epsilon(self.choose_time):
-                    action = random.randrange(self.action_dim)
-                else:
-                    action = dist.sample().cpu().numpy()[0]
+                action = dist.sample().cpu().numpy()[0]
                 action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
                 log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
