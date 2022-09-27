@@ -214,6 +214,8 @@ class A2CAlgorithm(Reinforcement):
 
     def choose_action(self, state):
         self.choose_time += 1
+        if random.random() < self.epsilon(self.choose_time):
+            return random.randrange(self.action_dim)
         with torch.no_grad():
             state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
             dist, _ = self.actor_critic(state_tensor)
@@ -247,7 +249,7 @@ class A2CAlgorithm(Reinforcement):
         self.experience_pool.put(state, reward, action, next_state, done)
 
     def load(self, path):
-        pass
+        self.actor_critic.load_state_dict(torch.load(path + 'dqn_checkpoint.pth'))
 
     def save(self, path):
         torch.save(self.actor_critic.state_dict(), path + 'dqn_checkpoint.pth')
@@ -287,12 +289,15 @@ class PPO2Algorithm(A2CAlgorithm):
         done = False
         loss_sum = []
         while not done:
-            with torch.no_grad():
-                state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
-                dist, predict_value = self.actor_critic(state_tensor)
-                action = dist.sample().cpu().numpy()[0]
-                action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
-                log_prob = dist.log_prob(action_tensor)
+            if random.random() < self.epsilon(self.choose_time):
+                action = random.randrange(self.action_dim)
+            else:
+                with torch.no_grad():
+                    state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+                    dist, predict_value = self.actor_critic(state_tensor)
+                    action = dist.sample().cpu().numpy()[0]
+                    action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
+                    log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
             self.experience_pool.put((state, reward, action, next_state, done, log_prob))
             # 保证学习之前，经验池里面有足够多的经验
