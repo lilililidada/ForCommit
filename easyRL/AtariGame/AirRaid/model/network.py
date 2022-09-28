@@ -89,20 +89,19 @@ class AdvantageActorCritic(torch.nn.Module):
             torch.nn.Conv2d(in_channels=self.conv_hidden_dim, out_channels=10,
                             kernel_size=5, stride=self.stride),
             # 输出数据维度为(1, 1, linear_hidden_dim)
-            torch.nn.Conv2d(in_channels=10, out_channels=self.linear_hidden_dim, kernel_size=5, stride=2)
+            torch.nn.Conv2d(in_channels=10, out_channels=self.linear_hidden_dim, kernel_size=5, stride=2),
+            torch.nn.Conv2d(in_channels=self.linear_hidden_dim, out_channels=self.linear_hidden_dim, kernel_size=1),
+            torch.nn.ReLU()
         )
         self.actor = torch.nn.Sequential(
-            torch.nn.Linear(self.conv_linear_input, self.linear_hidden_dim),
-            torch.nn.ReLU(),
             torch.nn.Linear(self.linear_hidden_dim, action_dim),
             torch.nn.Softmax(dim=1)
 
         )
         self.critic = torch.nn.Sequential(
-            torch.nn.Linear(self.conv_linear_input, self.linear_hidden_dim),
-            torch.nn.ReLU(),
             torch.nn.Linear(self.linear_hidden_dim, 1)
         )
+        self._initialize_weights()
 
     def forward(self, state):
         conv_feature = self.conv_layer(state)
@@ -111,3 +110,11 @@ class AdvantageActorCritic(torch.nn.Module):
         dist = torch.distributions.Categorical(probs)
         value = self.critic(conv_feature.view(conv_feature.size(0), self.conv_linear_input))
         return dist, value
+
+    def _initialize_weights(self):
+        for module in self.modules():
+            if isinstance(module, torch.nn.Conv2d) or isinstance(module, torch.nn.Linear):
+                torch.nn.init.orthogonal_(module.weight, torch.nn.init.calculate_gain('relu'))
+                torch.nn.init.constant_(module.bias, 0)
+
+
