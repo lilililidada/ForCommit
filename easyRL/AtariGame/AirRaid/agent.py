@@ -262,20 +262,23 @@ class PPO2Algorithm(A2CAlgorithm):
         self.ppo_epsilon = 0.5
 
     def update(self):
-        states, rewards, actions, next_states, dones, old_probs = zip(*self.experience_pool.sample(self.batch_size))
+        states, rewards, actions, next_states, dones, old_probs, value, next_value = zip(
+            *self.experience_pool.sample(self.batch_size))
         states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device)
         actions_tensor = torch.tensor(actions, dtype=torch.int64, device=self.device)
         next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
         dones_tensor = torch.tensor(np.int64(dones), dtype=torch.int64, device=self.device)
         old_probs_tensor = torch.tensor(old_probs, dtype=torch.float32, device=self.device)
+        value_tensor = torch.tensor(value, dtype=torch.float32, device=self.device)
+        next_value_tensor = torch.tensor(next_value, dtype=torch.float32, device=self.device)
         dist, predict_values = self.actor_critic(states_tensor)
         log_probs = dist.log_prob(actions_tensor)
         ratio = torch.exp(log_probs - old_probs_tensor)
         entropy = dist.entropy().mean()
         next_dist, predict_next_values = self.actor_critic(next_states_tensor)
-        advantages = rewards_tensor + self.gamma * predict_next_values * (1 - dones_tensor) - predict_values
-        critic_loss = torch.mean((advantages ** 2) / 2)
+        advantages = rewards_tensor + self.gamma * next_value_tensor * (1 - dones_tensor) - value_tensor
+        critic_loss = torch.mean(((rewards_tensor + self.gamma * predict_next_values - predict_values) ** 2) / 2)
         actor_loss = - torch.mean(
             torch.min(ratio, torch.clamp(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
         total_loss = actor_loss + critic_loss - 0.001 * entropy
@@ -295,7 +298,10 @@ class PPO2Algorithm(A2CAlgorithm):
             action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
             log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
-            self.experience_pool.put((state, reward, action, next_state, done, log_prob.item()))
+            next_state_tensor = torch.tensor(next_state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+            _, next_state_predict_value = self.actor_critic(next_state_tensor)
+            self.experience_pool.put(
+                (state, reward, action, next_state, done, log_prob.item(), predict_value, next_state_predict_value))
             # 保证学习之前，经验池里面有足够多的经验
             if len(self.experience_pool) > self.batch_size * 5:
                 # 更新网络
