@@ -176,7 +176,7 @@ class A2CAlgorithm(Reinforcement):
         self.gamma = self.cfg.gamma
         self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
-        self.epsilon = lambda study_round: 0.1 + (0.95 - 0.1) * math.exp(-1. * study_round / 10000)
+        self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 1000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -214,6 +214,8 @@ class A2CAlgorithm(Reinforcement):
 
     def choose_action(self, state):
         self.choose_time += 1
+        if random.random() < self.epsilon(self.choose_time):
+            return random.randrange(self.action_dim)
         with torch.no_grad():
             state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
             dist, _ = self.actor_critic(state_tensor)
@@ -247,7 +249,7 @@ class A2CAlgorithm(Reinforcement):
         self.experience_pool.put(state, reward, action, next_state, done)
 
     def load(self, path):
-        pass
+        self.actor_critic.load_state_dict(torch.load(path + 'dqn_checkpoint.pth'))
 
     def save(self, path):
         torch.save(self.actor_critic.state_dict(), path + 'dqn_checkpoint.pth')
@@ -260,20 +262,23 @@ class PPO2Algorithm(A2CAlgorithm):
         self.ppo_epsilon = 0.5
 
     def update(self):
-        states, rewards, actions, next_states, dones, old_probs = zip(*self.experience_pool.sample(self.batch_size))
+        states, rewards, actions, next_states, dones, old_probs, value, next_value = zip(
+            *self.experience_pool.sample(self.batch_size))
         states_tensor = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=self.device)
         actions_tensor = torch.tensor(actions, dtype=torch.int64, device=self.device)
         next_states_tensor = torch.tensor(np.array(next_states), dtype=torch.float32, device=self.device)
         dones_tensor = torch.tensor(np.int64(dones), dtype=torch.int64, device=self.device)
         old_probs_tensor = torch.tensor(old_probs, dtype=torch.float32, device=self.device)
+        value_tensor = torch.tensor(value, dtype=torch.float32, device=self.device)
+        next_value_tensor = torch.tensor(next_value, dtype=torch.float32, device=self.device)
         dist, predict_values = self.actor_critic(states_tensor)
         log_probs = dist.log_prob(actions_tensor)
         ratio = torch.exp(log_probs - old_probs_tensor)
         entropy = dist.entropy().mean()
-        next_probs, predict_next_values = self.actor_critic(next_states_tensor)
-        advantages = rewards_tensor + predict_next_values * (1 - dones_tensor) - predict_next_values
-        critic_loss = torch.mean((advantages ** 2) / 2)
+        next_dist, predict_next_values = self.actor_critic(next_states_tensor)
+        advantages = rewards_tensor + self.gamma * next_value_tensor * (1 - dones_tensor) - value_tensor
+        critic_loss = torch.mean(((rewards_tensor + self.gamma * predict_next_values - predict_values) ** 2) / 2)
         actor_loss = - torch.mean(
             torch.min(ratio, torch.clamp(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
         total_loss = actor_loss + critic_loss - 0.001 * entropy
@@ -287,14 +292,16 @@ class PPO2Algorithm(A2CAlgorithm):
         done = False
         loss_sum = []
         while not done:
-            with torch.no_grad():
-                state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
-                dist, predict_value = self.actor_critic(state_tensor)
-                action = dist.sample().cpu().numpy()[0]
-                action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
-                log_prob = dist.log_prob(action_tensor)
+            state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+            dist, predict_value = self.actor_critic(state_tensor)
+            action = dist.sample().cpu().numpy()[0]
+            action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
+            log_prob = dist.log_prob(action_tensor)
             next_state, reward, done, _ = env.step(action)
-            self.experience_pool.put((state, reward, action, next_state, done, log_prob))
+            next_state_tensor = torch.tensor(next_state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+            _, next_state_predict_value = self.actor_critic(next_state_tensor)
+            self.experience_pool.put(
+                (state, reward, action, next_state, done, log_prob.item(), predict_value, next_state_predict_value))
             # 保证学习之前，经验池里面有足够多的经验
             if len(self.experience_pool) > self.batch_size * 5:
                 # 更新网络
