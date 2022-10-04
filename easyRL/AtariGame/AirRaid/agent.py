@@ -174,7 +174,7 @@ class A2CAlgorithm(Reinforcement):
         self.batch_size = self.cfg.batch_size
         self.learn_rate = self.cfg.lr
         self.gamma = self.cfg.gamma
-        self.expected_repeat_time = 9
+        self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
         self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 1000)
         # env
@@ -210,6 +210,7 @@ class A2CAlgorithm(Reinforcement):
     def optimize(self, loss):
         self.optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 0.5)
         self.optimizer.step()
 
     def choose_action(self, state):
