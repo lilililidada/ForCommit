@@ -101,7 +101,7 @@ class AdvantageActorCritic(torch.nn.Module):
         self.critic = torch.nn.Sequential(
             torch.nn.Linear(self.linear_hidden_dim, 1)
         )
-        self._initialize_weights()
+        # self._initialize_weights()
 
     def forward(self, state):
         conv_feature = self.conv_layer(state)

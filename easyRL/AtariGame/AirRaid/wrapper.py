@@ -1,3 +1,8 @@
+import os
+import random
+import sys
+import uuid
+
 import gym
 import numpy as np
 from PIL import Image
@@ -29,18 +34,19 @@ class EnvWrapper(gym.Wrapper):
         #     return self.adjust_picture(observation_1), reward_1, done, _
         # observation_2, reward_2, done, info = super().step(0)
         # observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
+        observation = np.array(Image.fromarray(observation).convert("L"))
+        if self.is_loss_life(observation):
+            reward -= 500
         # 有奖励，重置和平计时
-        if reward:
-            self.peace_frame = 0
-        else:
-            self.peace_frame += 1
+        # if reward:
+        #     self.peace_frame = 0
+        # else:
+        #     self.peace_frame += 1
         # reward += self.peace_loss()
         # 计算射击价值
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
         observation = self.adjust_picture(observation)
-        # if self.is_loss_life(observation):
-        #     print("dead")
         return observation, reward, done, info
 
     def reset(self, **kwargs):
@@ -55,11 +61,15 @@ class EnvWrapper(gym.Wrapper):
         @param observation: 图片
         @return: 是否失去生命
         """
-        target_row = observation[0][29] * 255
-        for num in target_row:
-            if num >= 78:
-                return True
-        return False
+        check_target = observation[161:163]
+        sum_1 = 0
+        sum_2 = 0
+        for i in range(len(check_target[0])):
+            if check_target[0][i] == 85:
+                sum_1 += 1
+            if check_target[1][i] == 85:
+                sum_2 += 1
+        return sum_2 == sum_1 == 12
 
     def shot_cost(self, observation: np, action):
         """

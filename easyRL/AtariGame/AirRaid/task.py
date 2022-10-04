@@ -66,6 +66,7 @@ class TrainTask:
                 state = next_state
                 reward_sum += reward
                 step += 1
+            print(f"live step is {step}, reward is {reward_sum}")
 
     def load(self, path):
         self.agent.load(path)
@@ -81,7 +82,7 @@ def make_dir(*paths):
 if __name__ == '__main__':
     env: gym.Env = gym.make("ALE/AirRaid-v5")
     env = EnvWrapper(env)
-    task = TrainTask(env, 1400)
+    task = TrainTask(env, 500)
     # 当前文件所在绝对路径
     curr_path = os.path.dirname(os.path.abspath(__file__))
     # 父路径
