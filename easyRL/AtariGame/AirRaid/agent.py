@@ -309,9 +309,9 @@ class PPO2Algorithm(A2CAlgorithm):
             reward_sum += reward
             step += 1
             # 打破摆烂
-            if step > 100 and reward_sum == 0:
+            if self.is_nothing_to_do(rewards):
                 done = True
-                rewards = [-100 for i in range(len(rewards))]
+                rewards = [-100 for i in range(len(rewards) // 2)]
         rewards = self._compute_reward(rewards)
         for i in range(len(rewards)):
             transactions[i][1] = rewards[i]
@@ -325,3 +325,11 @@ class PPO2Algorithm(A2CAlgorithm):
             reward = rewards[i] + self.gamma * result[-1]
             result.append(reward)
         return result[::-1]
+
+    def is_nothing_to_do(self, rewards):
+        if len(rewards) < 100:
+            return False
+        for i in range(-1, -100, -1):
+            if rewards[i] != 0:
+                return False
+        return True
