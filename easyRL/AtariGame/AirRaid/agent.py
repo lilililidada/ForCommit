@@ -308,6 +308,10 @@ class PPO2Algorithm(A2CAlgorithm):
             state = next_state
             reward_sum += reward
             step += 1
+            # 打破摆烂
+            if step > 100 and reward_sum == 0:
+                done = True
+                rewards[-1] = -500
         rewards = self._compute_reward(rewards)
         for i in range(len(rewards)):
             transactions[i][1] = rewards[i]
