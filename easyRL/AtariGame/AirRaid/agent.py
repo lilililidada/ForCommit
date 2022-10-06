@@ -285,39 +285,45 @@ class PPO2Algorithm(A2CAlgorithm):
         return total_loss.item()
 
     def interaction(self, env):
-        reward_sum = 0
-        step = 0
-        state = env.reset(seed=int(1000 * random.random()))
-        done = False
         loss_sum = []
-        transactions = []
-        rewards = []
-        while not done:
-            state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
-            dist, predict_value = self.actor_critic(state_tensor)
-            action = dist.sample().cpu().numpy()[0]
-            action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
-            log_prob = dist.log_prob(action_tensor)
-            next_state, reward, done, _ = env.step(action)
-            transactions.append([state, None, action, next_state, done, log_prob.item()])
-            rewards.append(reward)
-            # 保证学习之前，经验池里面有足够多的经验
-            if len(self.experience_pool) > self.batch_size * 5:
-                # 更新网络
-                loss_sum.append(self.update())
-            state = next_state
-            reward_sum += reward
-            step += 1
-            # 打破摆烂
-            if self.is_nothing_to_do(rewards):
-                done = True
-                rewards = [-100 for i in range(len(rewards) // 2)]
-        rewards = self._compute_reward(rewards)
-        for i in range(len(rewards)):
-            transactions[i][1] = rewards[i]
-        for transaction in transactions:
-            self.experience_pool.put(transaction)
-        return reward_sum, loss_sum, step
+        steps = []
+        all_rewards = []
+        while sum(steps) < 500:
+            reward_sum = 0
+            step = 0
+            state = env.reset(seed=int(1000 * random.random()))
+            done = False
+            transactions = []
+            rewards = []
+            while not done:
+                state_tensor = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(dim=0)
+                dist, predict_value = self.actor_critic(state_tensor)
+                action = dist.sample().cpu().numpy()[0]
+                action_tensor = torch.tensor(action, dtype=torch.int8, device=self.device).unsqueeze(dim=0)
+                log_prob = dist.log_prob(action_tensor)
+                next_state, reward, done, _ = env.step(action)
+                transactions.append([state, None, action, next_state, done, log_prob.item()])
+                rewards.append(reward)
+                # 保证学习之前，经验池里面有足够多的经验
+                if len(self.experience_pool) > self.batch_size * 5:
+                    # 更新网络
+                    loss_sum.append(self.update())
+                state = next_state
+                reward_sum += reward
+                step += 1
+                # 打破摆烂
+                if self.is_nothing_to_do(rewards):
+                    done = True
+                    for i in range(-1, -100, -1):
+                        rewards[i] = -100
+            rewards = self._compute_reward(rewards)
+            for i in range(len(rewards)):
+                transactions[i][1] = rewards[i]
+            for transaction in transactions:
+                self.experience_pool.put(transaction)
+            all_rewards.append(reward_sum)
+            steps.append(step)
+        return np.mean(all_rewards), loss_sum, np.mean(steps)
 
     def _compute_reward(self, rewards):
         result = [rewards[-1]]
