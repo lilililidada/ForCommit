@@ -315,7 +315,7 @@ class PPO2Algorithm(A2CAlgorithm):
                 if self.is_nothing_to_do(rewards):
                     done = True
                     for i in range(-1, -100, -1):
-                        rewards[i] = -100
+                        rewards[i] = -10
             rewards = self._compute_reward(rewards)
             for i in range(len(rewards)):
                 transactions[i][1] = rewards[i]
