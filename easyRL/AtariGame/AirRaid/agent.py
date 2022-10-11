@@ -98,7 +98,7 @@ class Config:
         super().__init__()
         # 配置信息
         self.hidden_dim = 32
-        self.batch_size = 500
+        self.batch_size = 600
         self.gamma = 0.8
         self.lr = 0.01
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -305,7 +305,7 @@ class PPO2Algorithm(A2CAlgorithm):
                 transactions.append([state, None, action, next_state, done, log_prob.item()])
                 rewards.append(reward)
                 # 保证学习之前，经验池里面有足够多的经验
-                if len(self.experience_pool) > self.batch_size * 10:
+                if len(self.experience_pool) > self.batch_size * 15:
                     # 更新网络
                     loss_sum.append(self.update())
                 state = next_state
