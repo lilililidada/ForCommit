@@ -100,7 +100,7 @@ class Config:
         self.hidden_dim = 32
         self.batch_size = 500
         self.gamma = 0.99
-        self.lr = 0.00001
+        self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -262,6 +262,7 @@ class PPO2Algorithm(A2CAlgorithm):
         super().__init__(state_dim, action_dim)
         self.experience_pool = PPOExperiencePool(self.pool_size)
         self.ppo_epsilon = 0.5
+        self.critic_loss_fun = torch.nn.MSELoss()
 
     def update(self):
         states, rewards, actions, next_states, dones, old_probs = zip(
@@ -277,8 +278,10 @@ class PPO2Algorithm(A2CAlgorithm):
         ratio = torch.exp(log_probs - old_probs_tensor)
         entropy = dist.entropy().mean()
         next_dist, predict_next_values = self.actor_critic(next_states_tensor)
-        advantages = rewards_tensor + self.gamma * predict_next_values * (1 - dones_tensor) - predict_values
-        critic_loss = torch.mean(((rewards_tensor + self.gamma * predict_next_values - predict_values) ** 2) / 2)
+        advantages = rewards_tensor + self.gamma * predict_next_values.squeeze() * (
+                    1 - dones_tensor) - predict_values.squeeze()
+        critic_loss = self.critic_loss_fun(self.gamma * predict_next_values.squeeze() * (1 - dones_tensor),
+                                           predict_values.squeeze())
         actor_loss = - torch.mean(
             torch.min(ratio, torch.clamp(ratio, 1 - self.ppo_epsilon, 1 + self.ppo_epsilon)) * advantages)
         total_loss = actor_loss + critic_loss - 0.001 * entropy
@@ -314,14 +317,14 @@ class PPO2Algorithm(A2CAlgorithm):
             rewards = self._compute_reward(rewards)
             for i in range(len(rewards)):
                 transactions[i][1] = rewards[i]
-            if reward_sum > 100:
-                for transaction in transactions:
-                    self.experience_pool.put(transaction)
+            # if reward_sum > 100:
+            for transaction in transactions:
+                self.experience_pool.put(transaction)
             all_rewards.append(reward_sum)
             steps.append(step)
             for _ in range(step // 5):
                 # 保证学习之前，经验池里面有足够多的经验
-                if len(self.experience_pool) > self.batch_size * 15:
+                if len(self.experience_pool) > self.batch_size:
                     # 更新网络
                     loss_sum.append(self.update())
         return np.mean(all_rewards), loss_sum, np.mean(steps)
