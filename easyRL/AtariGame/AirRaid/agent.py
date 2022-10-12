@@ -100,7 +100,7 @@ class Config:
         self.hidden_dim = 32
         self.batch_size = 300
         self.gamma = 0.9
-        self.lr = 0.01
+        self.lr = 0.0001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
