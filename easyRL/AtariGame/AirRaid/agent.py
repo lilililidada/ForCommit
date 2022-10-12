@@ -311,6 +311,10 @@ class PPO2Algorithm(A2CAlgorithm):
                 state = next_state
                 reward_sum += reward
                 step += 1
+                # 保证学习之前，经验池里面有足够多的经验
+                if len(self.experience_pool) > self.batch_size * 15:
+                    # 更新网络
+                    loss_sum.append(self.update())
                 # 打破摆烂
                 if self.is_nothing_to_do(rewards):
                     done = True
@@ -322,11 +326,6 @@ class PPO2Algorithm(A2CAlgorithm):
                 self.experience_pool.put(transaction)
             all_rewards.append(reward_sum)
             steps.append(step)
-            for _ in range(step // 5):
-                # 保证学习之前，经验池里面有足够多的经验
-                if len(self.experience_pool) > self.batch_size:
-                    # 更新网络
-                    loss_sum.append(self.update())
         return np.mean(all_rewards), loss_sum, np.mean(steps)
 
     def _compute_reward(self, rewards):
