@@ -309,15 +309,14 @@ class PPO2Algorithm(A2CAlgorithm):
                 reward_sum += reward
                 step += 1
                 # 打破摆烂
-                # if self.is_nothing_to_do(rewards):
-                #     done = True
-                #     for i in range(-1, -100, -1):
-                #         rewards[i] = -10
+                if self.is_nothing_to_do(rewards):
+                    done = True
             rewards = self._compute_reward(rewards)
             for i in range(len(rewards)):
                 transactions[i][1] = rewards[i]
-            for transaction in transactions:
-                self.experience_pool.put(transaction)
+            if reward_sum > 100:
+                for transaction in transactions:
+                    self.experience_pool.put(transaction)
             all_rewards.append(reward_sum)
             steps.append(step)
             for _ in range(step // 5):
