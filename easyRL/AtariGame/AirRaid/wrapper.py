@@ -36,7 +36,7 @@ class EnvWrapper(gym.Wrapper):
         # observation, reward = ((observation_1 + observation_2) // 2, reward_1 + reward_2)
         observation = np.array(Image.fromarray(observation).convert("L"))
         if self.is_loss_life(observation):
-            reward -= 100
+            reward -= 500
             done = True
         # 有奖励，重置和平计时
         # if reward:
