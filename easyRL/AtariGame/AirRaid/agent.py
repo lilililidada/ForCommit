@@ -99,7 +99,7 @@ class Config:
         # 配置信息
         self.hidden_dim = 32
         self.batch_size = 300
-        self.gamma = 0.8
+        self.gamma = 0.9
         self.lr = 0.01
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -328,7 +328,10 @@ class PPO2Algorithm(A2CAlgorithm):
     def _compute_reward(self, rewards):
         result = [rewards[-1]]
         for i in range(len(rewards) - 2, -1, -1):
-            reward = rewards[i] + self.gamma * result[-1]
+            if rewards[i] < 0:
+                reward = rewards[i] + 0.3 * result[-1]
+            else:
+                reward = rewards[i] + self.gamma * result[-1]
             result.append(reward)
         return result[::-1]
 
