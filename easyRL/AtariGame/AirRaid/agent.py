@@ -98,9 +98,9 @@ class Config:
         super().__init__()
         # 配置信息
         self.hidden_dim = 32
-        self.batch_size = 300
-        self.gamma = 0.9
-        self.lr = 0.0001
+        self.batch_size = 500
+        self.gamma = 0.99
+        self.lr = 0.00001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -174,7 +174,7 @@ class A2CAlgorithm(Reinforcement):
         self.batch_size = self.cfg.batch_size
         self.learn_rate = self.cfg.lr
         self.gamma = self.cfg.gamma
-        self.expected_repeat_time = 2
+        self.expected_repeat_time = 1
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
         self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 1000)
         # env
@@ -210,7 +210,8 @@ class A2CAlgorithm(Reinforcement):
     def optimize(self, loss):
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 0.5)
+        for param in self.actor_critic.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
     def choose_action(self, state):
@@ -304,18 +305,14 @@ class PPO2Algorithm(A2CAlgorithm):
                 next_state, reward, done, _ = env.step(action)
                 transactions.append([state, None, action, next_state, done, log_prob.item()])
                 rewards.append(reward)
-                # 保证学习之前，经验池里面有足够多的经验
-                if len(self.experience_pool) > self.batch_size * 15:
-                    # 更新网络
-                    loss_sum.append(self.update())
                 state = next_state
                 reward_sum += reward
                 step += 1
                 # 打破摆烂
-                if self.is_nothing_to_do(rewards):
-                    done = True
-                    for i in range(-1, -100, -1):
-                        rewards[i] = -10
+                # if self.is_nothing_to_do(rewards):
+                #     done = True
+                #     for i in range(-1, -100, -1):
+                #         rewards[i] = -10
             rewards = self._compute_reward(rewards)
             for i in range(len(rewards)):
                 transactions[i][1] = rewards[i]
@@ -323,12 +320,17 @@ class PPO2Algorithm(A2CAlgorithm):
                 self.experience_pool.put(transaction)
             all_rewards.append(reward_sum)
             steps.append(step)
+            for _ in range(step // 5):
+                # 保证学习之前，经验池里面有足够多的经验
+                if len(self.experience_pool) > self.batch_size * 15:
+                    # 更新网络
+                    loss_sum.append(self.update())
         return np.mean(all_rewards), loss_sum, np.mean(steps)
 
     def _compute_reward(self, rewards):
         result = [rewards[-1]]
         for i in range(len(rewards) - 2, -1, -1):
-            if rewards[i] < 0:
+            if rewards[i - 1] < 0:
                 reward = rewards[i] + 0.3 * result[-1]
             else:
                 reward = rewards[i] + self.gamma * result[-1]
@@ -336,9 +338,9 @@ class PPO2Algorithm(A2CAlgorithm):
         return result[::-1]
 
     def is_nothing_to_do(self, rewards):
-        if len(rewards) < 100:
+        if len(rewards) < 1000:
             return False
-        for i in range(-1, -100, -1):
+        for i in range(-1, -1000, -1):
             if rewards[i] != 0:
                 return False
         return True
