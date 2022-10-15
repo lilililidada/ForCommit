@@ -78,9 +78,9 @@ class AdvantageActorCritic(torch.nn.Module):
         self.kernel_size = 5
         self.padding = 1
         self.stride = 2
-        self.conv_hidden_dim = 16
-        self.linear_hidden_dim = 400
-        self.conv_linear_input = 400
+        self.conv_hidden_dim = 32
+        self.linear_hidden_dim = 512
+        self.conv_linear_input = 512
         self.conv_layer = torch.nn.Sequential(
             torch.nn.Conv2d(in_channels=input_dim, out_channels=self.conv_hidden_dim, kernel_size=self.kernel_size,
                             padding=self.padding, stride=self.stride),
@@ -101,7 +101,7 @@ class AdvantageActorCritic(torch.nn.Module):
         self.critic = torch.nn.Sequential(
             torch.nn.Linear(self.linear_hidden_dim, 1)
         )
-        # self._initialize_weights()
+        self._initialize_weights()
 
     def forward(self, state):
         conv_feature = self.conv_layer(state)
