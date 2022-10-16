@@ -28,7 +28,6 @@ class EnvWrapper(gym.Wrapper):
         return np.array(crop_state).reshape((1, 32, 32)) / 255
 
     def step(self, action):
-        # 这里因为有些敌机会闪烁，只取一帧的话可能导致时而有时而无，所以一步走两帧
         observation, reward, done, info = super().step(action)
         # if done:
         #     return self.adjust_picture(observation_1), reward_1, done, _
@@ -37,7 +36,7 @@ class EnvWrapper(gym.Wrapper):
         observation = np.array(Image.fromarray(observation).convert("L"))
         if self.is_loss_life(observation):
             done = True
-            reward -= 100
+            reward -= 300
         # 有奖励，重置和平计时
         # if reward:
         #     self.peace_frame = 0
