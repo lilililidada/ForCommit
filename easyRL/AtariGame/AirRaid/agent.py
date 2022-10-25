@@ -98,9 +98,9 @@ class Config:
         super().__init__()
         # 配置信息
         self.hidden_dim = 32
-        self.batch_size = 500
+        self.batch_size = 600
         self.gamma = 0.99
-        self.lr = 0.001
+        self.lr = 0.005
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
