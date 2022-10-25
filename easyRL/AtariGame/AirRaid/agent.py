@@ -176,7 +176,7 @@ class A2CAlgorithm(Reinforcement):
         self.gamma = self.cfg.gamma
         self.expected_repeat_time = 3
         self.pool_size = (self.batch_size ** 2) // self.expected_repeat_time
-        self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 1000)
+        self.epsilon = lambda study_round: 0.05 + (0.9 - 0.05) * math.exp(-1. * study_round / 5000)
         # env
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -319,7 +319,7 @@ class PPO2Algorithm(A2CAlgorithm):
                 reward_sum += reward
                 step += 1
                 # 保证学习之前，经验池里面有足够多的经验
-                if len(self.experience_pool) > self.batch_size * 15:
+                if len(self.experience_pool) > self.batch_size * 5:
                     # 更新网络
                     loss_sum.append(self.update())
                 # 打破摆烂
