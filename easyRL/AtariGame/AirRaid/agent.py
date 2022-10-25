@@ -323,9 +323,9 @@ class PPO2Algorithm(A2CAlgorithm):
                     # 更新网络
                     loss_sum.append(self.update())
                 # 打破摆烂
-                if self.is_nothing_to_do(rewards):
-                    done = True
-                    rewards[-1] = -1000
+                # if self.is_nothing_to_do(rewards):
+                #     done = True
+                #     rewards[-1] = -1000
             rewards = self._compute_reward(rewards)
             for i in range(len(rewards)):
                 transactions[i][1] = rewards[i]
