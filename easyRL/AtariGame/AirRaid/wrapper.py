@@ -36,7 +36,6 @@ class EnvWrapper(gym.Wrapper):
         observation = np.array(Image.fromarray(observation).convert("L"))
         if self.is_loss_life(observation):
             done = True
-            reward = -100
         # 有奖励，重置和平计时
         # if reward:
         #     self.peace_frame = 0
@@ -46,6 +45,7 @@ class EnvWrapper(gym.Wrapper):
         # 计算射击价值
         # reward += self.shot_cost(observation, action)
         # 调整图片大小
+        reward = reward * 2
         observation = self.adjust_picture(observation)
         return observation, reward, done, info
 
