@@ -11,7 +11,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from easyRL.AtariGame.breakout.wrapper import BreakOutWrapper
 
-env_num = 1
+env_num = 3
 log_dir = 'logs'
 save_dir = 'trained_models_test'
 total_study_step = 1000000
