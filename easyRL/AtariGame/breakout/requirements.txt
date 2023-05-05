@@ -1,3 +1,5 @@
-gym[atari,accept-rom-license]==0.21.0
+gym[atari]==0.21.0
+autorom
+ale-py
 stable-baselines3==1.7.0
 tensorboard==2.12.1
