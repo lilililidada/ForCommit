@@ -18,6 +18,7 @@ total_study_step = 10000000
 batch_size = 64
 buffer_size = 10 * batch_size
 gamma = 0.9
+model_cache_path = sys.argv[1]
 
 
 def initial_env(env_name, seed=0):
@@ -40,21 +41,10 @@ def main():
     # 并行训练环境
     env = SubprocVecEnv(list(envs))
     # 模型算法
-    model = DQN(
-        policy="CnnPolicy",
-        env=env,
-        device="cuda",
-        verbose=1,
-        buffer_size=buffer_size,
-        batch_size=batch_size,
-        gamma=gamma,
-        tensorboard_log=log_dir,
-        learning_starts=buffer_size,
-        learning_rate=learning_rate_schedule()
-    )
+    model = get_model(env, path=model_cache_path)
 
     # 保存训练中间态
-    checkpoint_interval = 31250
+    checkpoint_interval = 300000
     checkpoint_callback = CheckpointCallback(save_freq=checkpoint_interval, save_path=save_dir, name_prefix="breakout_")
 
     # 日志与开始训练
@@ -66,6 +56,25 @@ def main():
                     callback=[checkpoint_callback])
         env.close()
     sys.stdout = original_stdout
+
+
+def get_model(env, path=None):
+    if path:
+        model = DQN.load(path, env=env)
+    else:
+        model = DQN(
+            policy="CnnPolicy",
+            env=env,
+            device="cuda",
+            verbose=1,
+            buffer_size=buffer_size,
+            batch_size=batch_size,
+            gamma=gamma,
+            tensorboard_log=log_dir,
+            learning_starts=buffer_size,
+            learning_rate=learning_rate_schedule()
+        )
+    return model
 
 
 def init_dir():
