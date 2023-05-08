@@ -5,7 +5,6 @@ import time
 
 import gym
 from stable_baselines3 import DQN
-from stable_baselines3.common.atari_wrappers import AtariWrapper
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
@@ -24,7 +23,7 @@ model_cache_path = sys.argv[1] if len(sys.argv) > 1 else None
 
 def initial_env(env_name, seed=0):
     env = gym.make(env_name)
-    wrap_env = AtariWrapper(env)
+    wrap_env = BreakOutWrapper(env)
     monitor_env = Monitor(wrap_env)
     return monitor_env
 
