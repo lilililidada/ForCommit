@@ -1,8 +1,8 @@
 import collections
 
+import cv2
 import gym
 import numpy
-from PIL import Image
 
 
 class BreakOutWrapper(gym.Wrapper):
@@ -16,22 +16,23 @@ class BreakOutWrapper(gym.Wrapper):
         self.max_frame_len = 4
         self.frame_stack = collections.deque(maxlen=self.max_frame_len)
         # 重定义observation大小
-        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(75, 75, self.frame_num), dtype=numpy.uint8)
+        self.width = 84
+        self.height = 84
+        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.width, self.height, self.frame_num),
+                                                dtype=env.observation_space.dtype)
         # 重定义动作 0 为什么都不做 1 为左 2 为右
         # self.action_space = gym.spaces.Discrete(3)
         self.max_reward = 200
         self.sum_removed_bricks = 0
         self.lives = 0
 
-    @staticmethod
-    def adjust_observation(obs):
-        # 模糊化图片
-        obs = obs[::2, ::2, ::]
+    def adjust_observation(self, obs):
         # 转为黑白
-        gray_obs = numpy.array(Image.fromarray(obs).convert("L"), dtype=numpy.uint8)
+        gray_obs = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
         # (2, 25, 77, 100)
-        crop_obs = gray_obs[25:100, 2:77]
-        return crop_obs
+        # crop_obs = gray_obs[25:100, 2:77]
+        frame = cv2.resize(gray_obs, (self.width, self.height), interpolation=cv2.INTER_AREA)
+        return frame
 
     def reset(self, **kwargs):
         self.sum_removed_bricks = 0
