@@ -18,12 +18,12 @@ total_study_step = 10000000
 batch_size = 64
 buffer_size = 10 * batch_size
 gamma = 0.9
-model_cache_path = sys.argv[1]
+model_cache_path = sys.argv[1] if len(sys.argv) > 1 else None
 
 
 def initial_env(env_name, seed=0):
     env = gym.make(env_name)
-    wrap_env = BreakOutWrapper(env)
+    wrap_env = AtariWrapper(env)
     monitor_env = Monitor(wrap_env)
     return monitor_env
 
