@@ -5,6 +5,7 @@ import time
 
 import gym
 from stable_baselines3 import DQN
+from stable_baselines3.common.atari_wrappers import AtariWrapper
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
