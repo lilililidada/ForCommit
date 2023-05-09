@@ -16,7 +16,7 @@ env_num = 1
 log_dir = 'logs'
 save_dir = 'trained_models_test'
 total_study_step = 10000000
-batch_size = 64
+batch_size = 128
 buffer_size = 10 * batch_size
 gamma = 0.9
 model_cache_path = sys.argv[1] if len(sys.argv) > 1 else None
@@ -32,7 +32,7 @@ def initial_env(env_name, seed=0):
     return monitor_env
 
 
-def learning_rate_schedule(start=1e-6, end=1e-4):
+def learning_rate_schedule(start=1e-5, end=1e-3):
     def schedule(process):
         return start + (end - start) * process
 
