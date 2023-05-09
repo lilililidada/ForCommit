@@ -51,15 +51,10 @@ def main():
     checkpoint_interval = 300000
     checkpoint_callback = CheckpointCallback(save_freq=checkpoint_interval, save_path=save_dir, name_prefix="breakout_")
 
-    # 日志与开始训练
-    log_file_path = os.path.join(save_dir, "training_log.txt")
-    original_stdout = sys.stdout
-    with open(log_file_path, "w") as log_file:
-        sys.stdout = log_file
-        model.learn(total_timesteps=total_study_step,
-                    callback=[checkpoint_callback])
-        env.close()
-    sys.stdout = original_stdout
+    # 开始训练
+    model.learn(total_timesteps=total_study_step,
+                callback=[checkpoint_callback])
+    env.close()
 
 
 def get_model(env, path=None):
