@@ -4,12 +4,14 @@ import sys
 import time
 
 import gym
+import keyboard
 from stable_baselines3 import DQN
+from stable_baselines3.common.atari_wrappers import AtariWrapper, MaxAndSkipEnv, EpisodicLifeEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-from easyRL.AtariGame.breakout.wrapper import BreakOutWrapper
+from easyRL.AtariGame.breakout.wrapper import BreakOutWrapper, FireResetWrapper
 
 env_num = 1
 log_dir = 'logs'
@@ -23,6 +25,9 @@ model_cache_path = sys.argv[1] if len(sys.argv) > 1 else None
 
 def initial_env(env_name, seed=0):
     env = gym.make(env_name)
+    env = EpisodicLifeEnv(env)
+    env = FireResetWrapper(env)
+    env = MaxAndSkipEnv(env)
     wrap_env = BreakOutWrapper(env)
     monitor_env = Monitor(wrap_env)
     return monitor_env
@@ -48,7 +53,14 @@ def main():
     checkpoint_callback = CheckpointCallback(save_freq=checkpoint_interval, save_path=save_dir, name_prefix="breakout_")
 
     # 日志与开始训练
-    model.learn(total_timesteps=total_study_step, callback=[checkpoint_callback])
+    log_file_path = os.path.join(save_dir, "training_log.txt")
+    original_stdout = sys.stdout
+    with open(log_file_path, "w") as log_file:
+        sys.stdout = log_file
+        model.learn(total_timesteps=total_study_step,
+                    callback=[checkpoint_callback])
+        env.close()
+    sys.stdout = original_stdout
 
 
 def get_model(env, path=None):
@@ -73,6 +85,18 @@ def get_model(env, path=None):
 def init_dir():
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
+
+
+def from_keyboard() -> int:
+    key_name = keyboard.read_key()
+    print(key_name)
+    if key_name == 'left':
+        return 3
+    if key_name == 'right':
+        return 2
+    if key_name == 'up':
+        return 1
+    return 0
 
 
 def play():
