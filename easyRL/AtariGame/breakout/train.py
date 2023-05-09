@@ -87,18 +87,6 @@ def init_dir():
     os.makedirs(log_dir, exist_ok=True)
 
 
-def from_keyboard() -> int:
-    key_name = keyboard.read_key()
-    print(key_name)
-    if key_name == 'left':
-        return 3
-    if key_name == 'right':
-        return 2
-    if key_name == 'up':
-        return 1
-    return 0
-
-
 def play():
     env: gym.Env = gym.make("ALE/Breakout-v5", render_mode="human")
     env = BreakOutWrapper(env)
