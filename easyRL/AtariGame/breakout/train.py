@@ -4,9 +4,8 @@ import sys
 import time
 
 import gym
-import keyboard
 from stable_baselines3 import DQN
-from stable_baselines3.common.atari_wrappers import AtariWrapper, MaxAndSkipEnv, EpisodicLifeEnv
+from stable_baselines3.common.atari_wrappers import MaxAndSkipEnv, EpisodicLifeEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
