@@ -64,8 +64,7 @@ class BreakOutWrapper(gym.Wrapper):
                     self.frame_stack.append(adjust_state)
                 sum_reward += self.sum_removed_bricks
                 break
-        return numpy.stack([self.frame_stack[i] for i in range(self.frame_num)],
-                           axis=-1), sum_reward / self.max_reward, done, info
+        return numpy.stack([self.frame_stack[i] for i in range(self.frame_num)], axis=-1), sum_reward / self.max_reward, done, info
 
 
 class FireResetWrapper(gym.Wrapper):

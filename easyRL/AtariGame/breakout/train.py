@@ -12,14 +12,16 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from easyRL.AtariGame.breakout.wrapper import BreakOutWrapper, FireResetWrapper
 
-env_num = 1
+env_num = 3
 log_dir = 'logs'
 save_dir = 'trained_models_test'
 total_study_step = 10000000
 batch_size = 128
-buffer_size = 10 * batch_size
+buffer_size = 50000
 gamma = 0.9
-model_cache_path = sys.argv[1] if len(sys.argv) > 1 else None
+exploration_fraction = 0.5
+exploration_initial_eps = 1
+exploration_final_eps = 0.1
 
 
 def initial_env(env_name, seed=0):
@@ -32,9 +34,12 @@ def initial_env(env_name, seed=0):
     return monitor_env
 
 
-def learning_rate_schedule(start=1e-5, end=1e-3):
-    def schedule(process):
-        return start + (end - start) * process
+def learning_rate_schedule(start=1e-5, end=1e-6):
+    def schedule(process_remain):
+        """
+        process 由大到小
+        """
+        return end + (start - end) * process_remain
 
     return schedule
 
@@ -45,21 +50,32 @@ def main():
     # 并行训练环境
     env = SubprocVecEnv(list(envs))
     # 模型算法
-    model = get_model(env, path=model_cache_path)
+    model = load_model(env)
 
     # 保存训练中间态
     checkpoint_interval = 300000
     checkpoint_callback = CheckpointCallback(save_freq=checkpoint_interval, save_path=save_dir, name_prefix="breakout_")
 
-    # 开始训练
-    model.learn(total_timesteps=total_study_step,
-                callback=[checkpoint_callback])
-    env.close()
+    # 日志与开始训练
+    log_file_path = os.path.join(save_dir, "training_log.txt")
+    original_stdout = sys.stdout
+    with open(log_file_path, "w") as log_file:
+        sys.stdout = log_file
+        model.learn(total_timesteps=total_study_step,
+                    callback=[checkpoint_callback])
+        env.close()
+    sys.stdout = original_stdout
 
 
-def get_model(env, path=None):
+def init_dir():
+    os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(log_dir, exist_ok=True)
+
+
+def load_model(env, path: str = None):
     if path:
-        model = DQN.load(path, env=env)
+        model = DQN.load(path, env=env, device="cuda")
+        model.exploration_schedule = lambda process: 0.01
     else:
         model = DQN(
             policy="CnnPolicy",
@@ -71,14 +87,13 @@ def get_model(env, path=None):
             gamma=gamma,
             tensorboard_log=log_dir,
             learning_starts=buffer_size,
-            learning_rate=learning_rate_schedule()
+            learning_rate=learning_rate_schedule(),
+            exploration_fraction=exploration_fraction,
+            exploration_initial_eps=exploration_initial_eps,
+            exploration_final_eps=exploration_final_eps,
+            policy_kwargs={"net_arch": [128, 128]},
         )
     return model
-
-
-def init_dir():
-    os.makedirs(save_dir, exist_ok=True)
-    os.makedirs(log_dir, exist_ok=True)
 
 
 def play():
