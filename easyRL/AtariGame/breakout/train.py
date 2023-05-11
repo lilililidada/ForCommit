@@ -1,6 +1,5 @@
 import os
 import random
-import sys
 import time
 
 import gym
@@ -16,10 +15,11 @@ env_num = 1
 log_dir = 'logs'
 save_dir = 'trained_models_test'
 total_study_step = 10000000
-batch_size = 128
-buffer_size = 50000
-gamma = 0.9
-exploration_fraction = 0.5
+batch_size = 32
+buffer_size = 100000
+gamma = 0.99
+tau = 1e-3
+exploration_fraction = 0.1
 exploration_initial_eps = 1
 exploration_final_eps = 0.1
 
@@ -82,11 +82,12 @@ def load_model(env, path: str = None):
             gamma=gamma,
             tensorboard_log=log_dir,
             learning_starts=buffer_size,
-            learning_rate=learning_rate_schedule(),
+            learning_rate=1e-5,
             exploration_fraction=exploration_fraction,
             exploration_initial_eps=exploration_initial_eps,
             exploration_final_eps=exploration_final_eps,
-            policy_kwargs={"net_arch": [128, 128]},
+            policy_kwargs={},
+            tau=tau
         )
     return model
 
