@@ -16,9 +16,9 @@ class BreakOutWrapper(gym.Wrapper):
         self.max_frame_len = 4
         self.frame_stack = collections.deque(maxlen=self.max_frame_len)
         # 重定义observation大小
-        self.width = 105
-        self.height = 80
-        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.width, self.height, self.frame_num),
+        self.width = 80
+        self.height = 105
+        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.height, self.width, self.frame_num),
                                                 dtype=env.observation_space.dtype)
         # 重定义动作 0 为什么都不做 1 为左 2 为右
         # self.action_space = gym.spaces.Discrete(3)
